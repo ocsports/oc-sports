@@ -1,0 +1,67 @@
+BODY {margin: 0px; font-family: comic sans ms,veranda,times new roman,arial; font-size: 12pt; color: #5E7830}
+A:link, A:visited {text-decoration: none; color: #0000B0}
+A:hover, A:active {text-decoration: underline; color: #0000B0}
+
+A {color: #000080}
+INPUT {color: #5E7830}
+SELECT {font-size: 12pt; font-family: comic sans ms,veranda,times new roman; color: #5E7830}
+OPTION {font-size: 12pt; font-family: comic sans ms,veranda,times new roman; color: #5E7830}
+TEXTAREA {font-size: 10pt; font-family: comic sans ms,veranda,times new roman; color: #5E7830}
+H2 {font-size: 18pt; color: #5E7830; margin-top: 0px; padding-left: 0.5em}
+H4 {font-size: 14pt; color: #5E7830; margin: 0px; padding: 0px}
+
+.errortext {font-size: 14pt; color: #FF0000}
+.smalllabel {font-size: 8pt; font-weight: bold}
+.header {height: 80px; background: #70B070 url(images/grad_green80.jpg) repeat-x}
+.headertext1 {font-family: curlz mt,comic sans ms,times new roman; border-bottom: 3px solid orange; font-size: 36pt; color: orange; font-weight: bold}
+.headertext2 {font-family: curlz mt,comic sans ms,times new roman; font-size: 24pt; color: white; font-style: italic; font-weight: bold}
+
+INPUT.formbutton {cursor: pointer; background: #70B070 url(images/grad_green.jpg); color: #26370A; margin-left: 0.5em; border: 1px solid olive; padding: 0px; padding-left: 3px; padding-right: 3px; font-weight: bold; font-family: comic sans ms,veranda,times new roman}
+INPUT.formbutton2 {cursor: pointer; background: #70B070 url(images/grad_green.jpg); color: #26370A; margin-left: 1.5em; border: 1px solid olive; padding: 0px; padding-left: 3px; padding-right: 3px; font-weight: bold; font-family: comic sans ms,veranda,times new roman}
+
+#msglist {width: 200px; padding: 0px; margin: 0px}
+#msglist ul {list-style: circle}
+#msglist ul li {padding-top: 0.25em; padding-bottom: 0.75em}
+
+#windowmenu {width: 200px; padding: 0px; margin: 0px}
+#windowmenu ul {list-style: none; padding: 0px; margin: 0px}
+#windowmenu li a {height: 24px; text-decoration: none; font-weight: normal; font-family: comic sans ms,veranda,times new roman; font-size: 12pt}
+#windowmenu li a:link, #windowmenu li a:visited {color: #5E7830; display: block; background: #FFFFFF url(images/menu1.gif); background-repeat: no-repeat; padding: 4px 0 0 10px}
+#windowmenu li a:hover {color: #26370A; font-weight: bold; background: #FFFFFF url(images/menu1.gif) 0 -32px; background-repeat: no-repeat; padding: 4px 0 0 10px}
+#windowmenu li a:active {color: #26370A; background: #FFFFFF url(images/menu1.gif) 0 -64px; background-repeat: no-repeat; padding: 4px 0 0 10px}
+
+DIV.gamemenu a {display: block; float: left; width: 10em; text-align: center; color: #26370A; font-size: 8pt; font-weight: bold; background: white url(images/grad_green.jpg); margin-right: 0.5em; padding-top: 0.25em; padding-bottom: 0.25em}
+DIV.topmenu a {color: #26370A; font-size: 8pt; font-weight: bold; padding-left: 1em; padding-right: 0.5em}
+
+DIV.msg {visibility: hidden; position: absolute; z-index: 10; left: 250px; top: 175px; background-color: #CCD7B7; border: 7px double #006000; padding: 3px; overflow: hidden}
+DIV.msg TABLE {padding: 10px}
+
+DIV.blockScreen {visibility: hidden; position: absolute; z-index: 5; left: 0px; top: 0px; background-color: #CCCCCC; width: 100%; height: 100%; opacity: .75; filter: alpha(opacity = 75)}
+
+TABLE.leftmenu {padding-left: 0.5em; padding-top: 1em; padding-bottom: 1em}
+TABLE.leftmenu TR {vertical-align: top}
+TABLE.leftmenu TR TD.menu {width: 11em}
+TABLE.leftmenu TR TD.menu A {display: block; float: left; width: 11em; text-align: left; color: #26370A; font-size: 10pt; background: #70B070 url(images/grad_green.jpg); padding: 0.25em 0 0.25em 0.75em; margin-bottom: 0.4em}
+
+TABLE.winner {margin-top: 0.5em; width: 45em; background-color: #CCD7B7}
+TABLE.winner TR TD {width: 50%; text-align: center}
+TABLE.winner TR TD IMG {padding-left: 0.25em; width: 70px; height: 70px; border: 0px}
+
+TABLE.trtable {padding-left: 1em; font-size: 10pt}
+TABLE.trtable TR {vertical-align: top}
+TABLE.trtable TR TD {text-align: left}
+TABLE.trtable TR.hdr {font-size: 10pt; font-weight: bold; background-color: #BBBBBB}
+TABLE.trtable TR.hdr TD {border-top: 1px solid #5E7830; border-bottom: 1px solid #5E7830}
+TABLE.trtable TR.row1 TD {background-color: #EEEEEE; border-bottom: 1px solid #5E7830}
+TABLE.trtable TR.row1 TD.ptr {cursor: pointer}
+TABLE.trtable TR.row2 TD {background-color: #FFFFFF; border-bottom: 1px solid #5E7830}
+TABLE.trtable TR.row2 TD.ptr {cursor: pointer}
+
+TABLE.league {padding-left: 1em; font-size: 8pt}
+TABLE.league TR {vertical-align: bottom}
+TABLE.league TR TD {text-align: center; border-right: 1px solid #CCCCCC; border-bottom: 1px solid #5E7830}
+TABLE.league TR.hdr {font-weight: bold; background-color: #DDDDDD}
+TABLE.league TR.hdr TD {border-top: 1px solid #5E7830}
+TABLE.league TR.row1 {background-color: #EEEEEE}
+TABLE.league TR.row2 {background-color: #FFFFFF}
+

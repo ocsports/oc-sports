@@ -1,0 +1,31 @@
+/* GENERICS */
+BODY {background:#003000; margin:0; font-family:veranda,helvetica,times new roman,arial; color:#5E7830}
+A, A:link, A:visited {text-decoration: none; color: #0000B0}
+A:hover, A:active {text-decoration: underline; color: #0000B0}
+INPUT, SELECT, OPTION, TEXTAREA {font-size:9pt; font-family:veranda,helvetica,times new roman,arial; color: #5E7830}
+H2 {font-size: 18pt; color: #5E7830; margin: 0px; padding-left: 0.5em}
+H4 {font-size: 14pt; color: #5E7830; margin: 0px; padding: 0px}
+
+
+.yellowbtn {cursor: pointer; background-color:#FFFF00; font-weight:bold; font-size:8pt; color:darkblue; padding:0 10px 0 10px; margin:0 0 0 1em}
+
+INPUT.btnGray {height: 30px; cursor: pointer; background: #FFFFFF url('images/gray_bk.png'); color: #DDDDDD; border: 1px solid black; padding: 0 15px 0 15px; font-weight: bold}
+INPUT.btnYellow {height: 30px; cursor: pointer; background: #FFFFFF url('images/yellow_bk.png'); color: #000000; border: 1px solid black; padding: 0 15px 0 15px; font-weight: bold}
+
+DIV.win {background-color: #FFFFFF; border: 1px solid #CCCCCC; padding: 0.5em}
+DIV.win TABLE {font-size: 10pt}
+DIV.win TR {background-color: #FFFFFF; vertical-align: top}
+DIV.win TD {text-align: left}
+DIV.win TR.hdr {font-weight: bold; background-color: #BBBBBB}
+DIV.win TR.hdr TD {border-top: 1px solid #5E7830; border-bottom: 1px solid #5E7830}
+DIV.win TR.brdr TD {border-right: 1px solid #DDDDDD; border-bottom: 1px solid #5E7830}
+
+TABLE.league {padding: 1em}
+TABLE.league TR {vertical-align: bottom}
+TABLE.league TR TD {text-align: center; }
+TABLE.league TR.hdr {font-weight: bold; background-color: #DDDDDD}
+TABLE.league TR.hdr TD {border-top: 1px solid #5E7830}
+TABLE.league TR.row1 {background-color: #EEEEEE}
+TABLE.league TR.row2 {background-color: #FFFFFF}
+TABLE.league TR.used TD {color: red; text-decoration: line-through}
+
