@@ -9,6 +9,7 @@
             <param-name>alias</param-name>
             <param-value>goUser</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
         <servlet-name>PoolServlet</servlet-name>
@@ -17,6 +18,7 @@
             <param-name>alias</param-name>
             <param-value>goPool</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
         <servlet-name>AdminServlet</servlet-name>
@@ -25,6 +27,7 @@
             <param-name>alias</param-name>
             <param-value>goAdmin</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
         <servlet-name>StatsServlet</servlet-name>
@@ -33,6 +36,7 @@
             <param-name>alias</param-name>
             <param-value>goStats</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
         <servlet-name>TimerServlet</servlet-name>
@@ -61,6 +65,7 @@
             <param-name>taskClass3</param-name>
             <param-value>com.ocsports.timer.SendReminderTask,60</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
         <servlet-name>DraftServlet</servlet-name>
@@ -69,6 +74,7 @@
             <param-name>alias</param-name>
             <param-value>goDraft</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <!-- SERVLET MAPPINGS -->
     <servlet-mapping>
