@@ -1,0 +1,180 @@
+BODY {
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    font-family: times new roman,veranda,helvetica;
+    background-image: url(../images/desert/background.gif); 
+    background-color: #CCCC99;
+}
+
+A {
+    text-decoration: none;
+}
+
+A:visited {
+    text-decoration: none;
+}
+
+A:hover {
+    text-decoration: underline;
+}
+
+A.pagelink {
+    color: #336666;
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+A.labellink {
+    color: #336666;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+.pagetitle {
+    color: #336666;
+    font-size: 18pt;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.pageheader {
+    color: #336666;
+    font-size: 10pt;
+    font-weight: bold;
+    font-style: italic;
+}
+.pagesubheader {
+    color: #336666;
+    font-size: 8pt;
+    font-weight: normal;
+    font-style: italic;
+}
+
+INPUT {
+    color: #336666;
+    font-size: 10pt;
+    font-weight: normal;
+}
+
+INPUT.button {
+    color: #336666;
+    font-size: 10pt;
+    font-weight: normal;
+}
+
+INPUT.login {
+    color: #336666;
+    font-size: 8pt;
+    font-weight: normal;
+}
+
+TEXTAREA {
+    color: #336666;
+    font-size: 10pt;
+}
+
+SELECT {
+    width: 175px;
+    color: #336666;
+    font-weight: normal;
+}
+
+SELECT.wide {
+    width: 300px;
+    color: #336666;
+    font-weight: normal;
+}
+
+OPTION {
+    color: #336666;
+    font-weight: normal;
+}
+
+TABLE.border {
+    border-style: inset;
+    border-width: 2px;
+    border-color: #C0C0C0;
+}
+
+.label {
+    color: #336666;
+    font-size: 10pt;
+    font-weight: normal;
+}
+
+.labelbold {
+    color: #336666;
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+.smalllabel {
+    color: #336666;
+    font-size: 8pt;
+    font-weight: normal;
+}
+
+.tabletitle {
+    background-color: #FFFFC0;
+    color: #336666;
+    font-size: 10pt;
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+.tablesubtitle {
+    background-color: #FFFFC0;
+    color: #336666;
+    font-size: 8pt;
+    font-weight: bold;
+    vertical-align: middle;
+}
+
+.rowdata1 { 
+    background-color: #CCCC99;
+    color: #336666;
+    font-size: 8pt;
+    font-weight: normal;
+}
+
+.rowdata2 {
+    background-color: #FFFFFF;
+    color: #336666;
+    font-size: 8pt;
+    font-weight: normal;
+}
+
+.highlight {
+    background-color: #FFFF40;
+    color: #336666;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+.redtext {
+    color: red;
+    font-size: 10pt;
+    font-weight: normal;
+}
+
+.tab {
+    color: white;
+    background-color: #CCCC99;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+.tabselected {
+    color: white;
+    background-color: #336666;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+/***
+    gray:        #CCCC99 (204,204,153)
+    dark-gray:   #336666 (51,102,102)
+    maize:       #FFFFB0 (255,255,176)
+**/

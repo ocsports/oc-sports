@@ -1,0 +1,45 @@
+BODY {font-size: 8pt; margin: 0px; font-family: comic sans ms,veranda,times new roman,arial; color: #5E7830}
+A:link, A:visited {text-decoration: none; color: #0000B0}
+A:hover, A:active {text-decoration: underline; color: #0000B0}
+
+A.leftmenu {display: block; float: left; width: 12em; text-align: left; color: #26370A; font-size: 8pt; background: #70B070 url(images/grad_green.jpg); padding-top: 0.25em; padding-bottom: 0.25em; padding-left: 0.75em; margin-bottom: 0.25em; margin-right: 0.25em}
+
+.errortext {font-size: 8pt; color: #FF0000}
+.smalllabel {font-size: 8pt; font-weight: bold}
+.header {vertical-align: top; height: 60px; background: #70B070 url(images/grad_green80.jpg) repeat-x}
+.headertext1 {font-family: curlz mt,lucida handwriting,cursive,times new roman; border-bottom: 3px solid orange; font-size: 24pt; color: orange; font-weight: bold}
+.headertext2 {font-family: curlz mt,lucida handwriting,cursive,times new roman; font-size: 18pt; color: white; font-style: italic; font-weight: bold}
+
+DIV, A, INPUT, SELECT, OPTION, TEXTAREA {font-size: 8pt; font-family: comic sans ms,veranda,times new roman,arial; color: #5E7830}
+
+INPUT.formbutton {cursor: pointer; background: #70B070 url(images/grad_green.jpg); color: #26370A; margin-left: 0.5em; border: 1px solid olive; padding: 0px; padding-left: 3px; padding-right: 3px; font-weight: bold; font-family: cursive}
+INPUT.formbutton2 {cursor: pointer; background: #70B070 url(images/grad_green.jpg); color: #26370A; margin-left: 1.5em; border: 1px solid olive; padding: 0px; padding-left: 3px; padding-right: 3px; font-weight: bold; font-family: cursive}
+
+H2 {font-size: 12pt; color: #5E7830; margin-top: 0px}
+H4 {font-size: 10pt; color: #5E7830; margin: 0px; padding: 0px}
+
+#msglist {width: 100%; padding: 0px; margin: 0px}
+#msglist ul {list-style: circle}
+#msglist ul li {padding-top: 0.25em; padding-bottom: 0.5em}
+
+TABLE.winner {font-size: 8pt; margin-top: 0.5em; width: 30em; background-color: #CCD7B7}
+TABLE.winner TR TD {width: 50%; text-align: center}
+TABLE.winner TR TD IMG {padding-left: 0.25em; width: 70px; height: 70px; border: 0px}
+
+TABLE.trtable {padding-left: 1em; font-size: 8pt}
+TABLE.trtable TR TD {text-align: left}
+TABLE.trtable TR.hdr {font-weight: bold; background-color: #BBBBBB}
+TABLE.trtable TR.hdr TD {border-top: 1px solid #5E7830; border-bottom: 1px solid #5E7830}
+TABLE.trtable TR.row1 TD {background-color: #EEEEEE; border-bottom: 1px solid #5E7830}
+TABLE.trtable TR.row1 TD.ptr {cursor: pointer}
+TABLE.trtable TR.row2 TD {background-color: #FFFFFF; border-bottom: 1px solid #5E7830}
+TABLE.trtable TR.row2 TD.ptr {cursor: pointer}
+
+TABLE.league {padding-left: 1em; font-size: 8pt}
+TABLE.league TR {vertical-align: bottom}
+TABLE.league TR TD {text-align: center; border-right: 1px solid #CCCCCC; border-bottom: 1px solid #5E7830}
+TABLE.league TR.hdr {font-weight: bold; background-color: #DDDDDD}
+TABLE.league TR.hdr TD {border-top: 1px solid #5E7830}
+TABLE.league TR.row1 {background-color: #EEEEEE}
+TABLE.league TR.row2 {background-color: #FFFFFF}
+
