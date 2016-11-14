@@ -157,8 +157,8 @@ public class SeasonSQLController extends SQLBase {
             new Integer(gm.getHomeTeamId()),
             new Float(gm.getSpread()),
             gm.getNotes(),
-            new Boolean(false),
-            new Boolean(false)};
+            Boolean.valueOf(false),
+            Boolean.valueOf(false)};
         this.executeUpdate(query, args);
         return newGameId;
     }
@@ -242,12 +242,12 @@ public class SeasonSQLController extends SQLBase {
             this.executeQuery(query.toString(), args);
             if (rs != null) {
                 while (rs.next()) {
-                    seasons.add(this.loadSeasonModel(rs));
+                    seasons.add(SeasonSQLController.loadSeasonModel(rs));
                 }
             }
         } catch (java.sql.SQLException sqle) {
             throw new ProcessException(sqle);
-        } catch (Exception e) {
+        } catch (ProcessException e) {
             throw new ProcessException(e);
         }
         return seasons;
@@ -306,7 +306,7 @@ public class SeasonSQLController extends SQLBase {
         try {
             this.executeQuery(query, new Object[]{new Integer(teamId)});
             if (rs != null && rs.next()) {
-                tm = this.loadTeamModel(rs);
+                tm = SeasonSQLController.loadTeamModel(rs);
             }
         } catch (java.sql.SQLException sqle) {
             throw new ProcessException(sqle);
@@ -325,7 +325,7 @@ public class SeasonSQLController extends SQLBase {
 
             if (rs != null) {
                 while (rs.next()) {
-                    TeamModel tm = this.loadTeamModel(rs);
+                    TeamModel tm = SeasonSQLController.loadTeamModel(rs);
                     map.put(String.valueOf(tm.getId()), tm);
                 }
             }
@@ -367,7 +367,7 @@ public class SeasonSQLController extends SQLBase {
 
             if (rs != null) {
                 while (rs.next()) {
-                    TeamModel tm = this.loadTeamModel(rs);
+                    TeamModel tm = SeasonSQLController.loadTeamModel(rs);
                     teams.add(tm);
                 }
             }
@@ -400,7 +400,7 @@ public class SeasonSQLController extends SQLBase {
 
             this.executeQuery(query, args.toArray());
             if (rs != null && rs.next()) {
-                tm = this.loadTeamModel(rs);
+                tm = SeasonSQLController.loadTeamModel(rs);
             }
             return tm;
         } catch (java.sql.SQLException sqle) {
@@ -420,7 +420,7 @@ public class SeasonSQLController extends SQLBase {
 
             if (rs != null) {
                 while (rs.next()) {
-                    TeamConferenceModel tcm = this.loadTeamConferenceModel(rs);
+                    TeamConferenceModel tcm = SeasonSQLController.loadTeamConferenceModel(rs);
                     conferenceModels.add(tcm);
                 }
             }
@@ -443,7 +443,7 @@ public class SeasonSQLController extends SQLBase {
         ArrayList divisionModels = new ArrayList();
 
         try {
-            Object[] args = null;
+            Object[] args;
             if (conferenceId > 0) {
                 args = new Object[]{new Integer(sportType), new Integer(conferenceId)};
             } else {
@@ -453,7 +453,7 @@ public class SeasonSQLController extends SQLBase {
 
             if (rs != null) {
                 while (rs.next()) {
-                    TeamDivisionModel tcm = this.loadTeamDivisionModel(rs);
+                    TeamDivisionModel tcm = SeasonSQLController.loadTeamDivisionModel(rs);
                     divisionModels.add(tcm);
                 }
             }
@@ -478,7 +478,7 @@ public class SeasonSQLController extends SQLBase {
 
             if (rs != null) {
                 while (rs.next()) {
-                    gameModels.add(this.loadGameModel(rs));
+                    gameModels.add(SeasonSQLController.loadGameModel(rs));
                 }
             }
             return gameModels;
@@ -537,7 +537,7 @@ public class SeasonSQLController extends SQLBase {
                 new Integer(homeTeamId)};
             this.executeQuery(query, args);
             if (rs != null && rs.next()) {
-                gm = this.loadGameModel(rs);
+                gm = SeasonSQLController.loadGameModel(rs);
             }
 
             return gm;
@@ -558,14 +558,17 @@ public class SeasonSQLController extends SQLBase {
                     + " AND s.season_active_si = 1"
                     + " AND g.game_posted_si = 0"
                     + " AND s.sport_type_si = ?"
-                    + " AND g.game_start_dt <= ?"
-                    + " ORDER BY g.game_start_dt";
-            Object[] args = new Object[]{new Integer(sportType), new java.util.Date()};
+                    + " AND g.game_start_dt < ?"
+                    + " ORDER BY g.game_start_dt ASC";
+            Object[] args = new Object[]{
+                new Integer(sportType),
+                new java.util.Date()
+            };
             this.executeQuery(query, args);
 
             if (rs != null) {
                 while (rs.next()) {
-                    gameModels.add(this.loadGameModel(rs));
+                    gameModels.add(SeasonSQLController.loadGameModel(rs));
                 }
             }
         } catch (java.sql.SQLException sqle) {
