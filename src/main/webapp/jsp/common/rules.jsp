@@ -62,40 +62,41 @@
         <td>
             <ul>
                 <li>Official payouts are based on the number of entrants and will be posted after payments are received from all participants.</li>
-                <li>As an example, here are the payouts for the <u>2014</u> season.</li>
-                <!--<li>Here are the official payouts for the <u>2014</u> season.</li>-->
+                <!--<li>As an example, here are the payouts for the <u>2016</u> season.</li>-->
+                <li>Here are the official payouts for the <u>2016</u> season.</li>
             </ul>
             <pre style="font-size:10pt">
-                Entry Fees         $ 17,490.00   ($110 x 159 players)
-                Admin Fee          $   -318.00   ($2/player)
-                Other Fees         $   -134.00  (PayPal, etc...)
-                ----------------------------------    
-                Total Prize Money  $ 17,038.00
+                2016 SEASON - PAYOUT SCHEDULE
+                ---------------------------------------------------------
+                Entry Fees          $ 17,380.00  ($110 x 158 players)
+                Admin Fee           $   -316.00  ($2 x 158 players)
+                PayPal Fees         $   -142.00
+                                ----------------
+                Total Prize Money   $ 16,922.00
 
+                Weekly Prize        $  4,080.00  ($240 x 17 weeks)
+                Survivor            $    800.00
+                Lock                $    800.00
 
-                Weekly Winners     $  4,080.00   ($240 x 17 weeks)
+                1st Place           $  3,000.00
+                2nd Place           $  1,500.00
+                3rd Place           $  1,200.00
+                4th Place           $  1,000.00
+                5th Place           $    800.00
+                6th Place           $    650.00
+                7th Place           $    550.00
+                8th Place           $    450.00
+                9th Place           $    400.00
+                10th Place          $    350.00
+                11th Place          $    300.00
+                12th Place          $    250.00
+                13th Place          $    225.00
+                14th Place          $    200.00
+                15th Place          $    150.00
 
-                1st Place          $  3,200.00 
-                2nd Place          $  1,600.00 
-                3rd Place          $  1,200.00 
-                4th Place          $  1,000.00 
-                5th Place          $    800.00 
-                6th Place          $    650.00 
-                7th Place          $    575.00 
-                8th Place          $    450.00 
-                9th Place          $    375.00 
-                10th Place         $    325.00 
-                11th Place         $    250.00 
-                12th Place         $    225.00 
-                13th Place         $    200.00 
-                14th Place         $    150.00 
-                15th Place         $    125.00
-                Last Place         $    233.00 
-
-                Survivor           $    800.00 
-                Lock               $    800.00 
-                ----------------------------------    
-                Total Payouts      $ 17,038.00 
+                Last Place          $    217.00
+                                ----------------
+                Total Payouts       $ 16,922.00     
             </pre>
         </td>
     </tr>

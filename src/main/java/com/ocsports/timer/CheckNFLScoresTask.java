@@ -89,28 +89,27 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
 		while (it.hasNext()) {
             JSONArray gameData = (JSONArray)it.next();
             
-            String gameStatus;
-            String awayAbrv;
-            int awayScore;
-            String homeAbrv;
-            int homeScore;
-            try {
-                gameStatus = (String)gameData.get(2);
-                awayAbrv = (String)gameData.get(4);
-                awayScore = Integer.parseInt( (String)gameData.get(5) );
-                homeAbrv = (String)gameData.get(6);
-                homeScore = Integer.parseInt( (String)gameData.get(7) );
-            }
-            catch (Exception ex) {
-                addTaskMessage("Unable to parse game json: " + ex.getMessage());
-                continue;
-            }
-
+            String gameStatus = (String)gameData.get(2);
             if (!gameStatus.toUpperCase().equals("FINAL")) {
                 // game is stil in progress or has not started; skip it
                 continue;
             }
 
+            String awayAbrv;
+            int awayScore;
+            String homeAbrv;
+            int homeScore;
+            try {
+                awayAbrv = (String)gameData.get(4);
+                awayScore = Integer.parseInt( (String)gameData.get(5) );
+                homeAbrv = (String)gameData.get(6);
+                homeScore = Integer.parseInt( (String)gameData.get(7) );
+            }
+            catch (NumberFormatException ex) {
+                addTaskMessage("Unable to parse game json: " + ex.getMessage());
+                continue;
+            }
+            
             TeamModel awayTeam = seasonSQL.findTeam(null, null, awayAbrv);
             TeamModel homeTeam = seasonSQL.findTeam(null, null, homeAbrv);
 

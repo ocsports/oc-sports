@@ -17,11 +17,6 @@ public abstract class SQLBase {
 
     private static final Logger log = Logger.getLogger(SQLBase.class.getName());
 
-//    private final String DRIVER = "com.mysql.jdbc.Driver";
-//    private final String HOST = "localhost";
-//    private final String DB = "comocspo_pool";
-//    private final String USER = "comocspo_admin";
-//    private final String PWD = "AAA---Password123";
     private java.sql.Connection conn;
     private java.sql.PreparedStatement stmt;
     protected java.sql.ResultSet rs;
@@ -29,66 +24,38 @@ public abstract class SQLBase {
     private static DataSource datasource = null;
 
     public SQLBase() {
-        log.info("ENTER SQLBase constructor");
-        loadConnectionPool();
-        log.info("EXIT SQLBase constructor");
     }
 
-    private void loadConnectionPool() {
+    private boolean getDataSource() {
+        if (datasource != null) return true;
+
         try {
             InitialContext initialContext = new InitialContext();
             if (initialContext == null) {
-                String message = "There was no InitialContext in DBBroker. We're about to have some problems.";
-                throw new Exception(message);
+                throw new Exception("There was no InitialContext in DBBroker. We're about to have problems.");
             }
-            log.info("initialContext is valid");
-
             datasource = (DataSource) initialContext.lookup("java:/comp/env/jdbc/ocsportsDB");
-
             if (datasource == null) {
-                String message = "Could not find our DataSource in DBBroker. We're about to have problems.";
-                throw new Exception(message);
+                throw new Exception("Could not find our DataSource in DBBroker. We're about to have problems.");
             }
-            log.info("datasource is valid");
+            return true;
         } catch (Exception e) {
             log.error("*** " + e.getMessage());
+            return false;
         }
     }
 
     public void openConnection() throws ProcessException {
         try {
-            if (datasource == null) {
-                loadConnectionPool();
+            if (!getDataSource()) {
+                throw new ProcessException("failed to open SQL connection");
             }
             if (conn == null || conn.isClosed()) {
                 conn = datasource.getConnection();
-//                Class.forName(DRIVER).newInstance();
-//
-//                log.info("opening sql connection");
-//                String url = "jdbc:mysql://" + HOST + "/" + DB + "?user=" + USER + "&password=" + PWD;
-//                conn = DriverManager.getConnection(url);
-//                conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-//                log.info("sql connection open");
-
-                // MySQL does not support Transactions
-                /*
-                 conn.setAutoCommit(false);
-                 if(conn.getAutoCommit() == false) {
-                 throw new ProcessException("Unable to set auto commit to false");
-                 }
-                 */
             }
-//        } catch (java.lang.ClassNotFoundException cnfe) {
-//            log.error(cnfe.getMessage());
-//            throw new ProcessException(cnfe);
-//        } catch (java.lang.InstantiationException ie) {
-//            log.error(ie.getMessage());
-//            throw new ProcessException(ie);
-//        } catch (java.lang.IllegalAccessException iae) {
-//            log.error(iae.getMessage());
-//            throw new ProcessException(iae);
+            // always reset the statement and results when calling openConnection;
+            resetStatement();
         } catch (java.sql.SQLException sqle) {
-            log.error(sqle.getMessage());
             throw new ProcessException(sqle);
         }
     }
@@ -98,20 +65,11 @@ public abstract class SQLBase {
             if (conn != null && !conn.isClosed() && !conn.getAutoCommit()) {
                 conn.commit();
             }
-
-            try {
-                rs.close();
-            } catch (Exception e) {
-            }
-            try {
-                stmt.close();
-            } catch (Exception e) {
-            }
-            try {
-                conn.close();
-            } catch (Exception e) {
-            }
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (stmt != null) conn.close();
         } catch (SQLException sqle) {
+            log.error("failed to close SQL connection properly: " + sqle.getMessage());
         } finally {
             rs = null;
             stmt = null;
@@ -122,10 +80,8 @@ public abstract class SQLBase {
     public void executeUpdate(String sql, Object[] params) throws ProcessException {
         try {
             this.openConnection();
-            this.resetStatement();
             stmt = conn.prepareStatement(sql);
             this.addParameters(params);
-            //System.out.println("executeQuery=" + sql + "");
             stmt.executeUpdate();
         } catch (SQLException sqle) {
             throw new ProcessException(sqle);
@@ -135,10 +91,8 @@ public abstract class SQLBase {
     public ResultSet executeQuery(String sql, Object[] params) throws ProcessException {
         try {
             this.openConnection();
-            this.resetStatement();
             stmt = conn.prepareStatement(sql);
             this.addParameters(params);
-            //System.out.println("executeQueryWithResults=" + sql + "");
             rs = stmt.executeQuery();
             return rs;
         } catch (SQLException sqle) {
