@@ -14,6 +14,7 @@ import com.ocsports.core.*;
 import com.ocsports.sql.*;
 import com.ocsports.models.*;
 import com.ocsports.servlets.TimerServlet;
+import java.text.SimpleDateFormat;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
@@ -90,7 +91,7 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
             JSONArray gameData = (JSONArray)it.next();
             
             String gameStatus = (String)gameData.get(2);
-            if (!gameStatus.toUpperCase().equals("FINAL")) {
+            if (gameStatus.toUpperCase().indexOf("FINAL") > -1) {
                 // game is stil in progress or has not started; skip it
                 continue;
             }
@@ -109,7 +110,7 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
                 addTaskMessage("Unable to parse game json: " + ex.getMessage());
                 continue;
             }
-            
+
             TeamModel awayTeam = seasonSQL.findTeam(null, null, awayAbrv);
             TeamModel homeTeam = seasonSQL.findTeam(null, null, homeAbrv);
 
@@ -124,6 +125,8 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
                     try {
                         seasonSQL.updateGame(gm);
                         poolSQL.postGame(gm);
+                        
+                        sendGamePostedEmail( gm, awayTeam, homeTeam );
                     }
                     catch(ProcessException pe2) {
                         addTaskMessage("failed to post score for game " + gm.getId() + ": " + pe2.getMessage());
@@ -133,4 +136,30 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
             }
         }
     }
+    
+    private boolean sendGamePostedEmail(GameModel gm, TeamModel awayTeam, TeamModel homeTeam) {
+		String[] TOs = PropertiesHelper.getProperty( PropList.ADMIN_POST_SCORES_EMAIL ).split(",");
+
+		SimpleDateFormat fmt = new SimpleDateFormat();
+		fmt.applyPattern("h:mm a");
+		String currTime = fmt.format( new java.util.Date() );
+
+		String subject = "Game score posted for: " + awayTeam.getAbrv() + " at " + homeTeam.getAbrv();
+        String msgScore;
+		if( gm.getHomeScore() > gm.getAwayScore() ) {
+			msgScore = homeTeam.getAbrv() + " " + gm.getHomeScore() + " - " + awayTeam.getAbrv() + " " + gm.getAwayScore();
+		}
+		else {
+			msgScore = awayTeam.getAbrv() + " " + gm.getAwayScore() + " - " + homeTeam.getAbrv() + " " + gm.getHomeScore();
+		}
+        String msgHeader = "Final score: ";
+        String msgFooter = "\n\n" + "NFL game score has been automatically posted at " + currTime + ".";
+
+        StringBuffer msg = new StringBuffer();
+		msg.append( msgHeader );
+        msg.append( msgScore );
+		msg.append( msgFooter );
+
+        return MyEmailer.sendEmailMsg(TOs, null, null, subject, msg.toString(), null);
+	}
 }
