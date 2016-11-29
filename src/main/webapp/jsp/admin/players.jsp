@@ -14,10 +14,10 @@
     Iterator iter = null;
     int counter = 0;
     
-    String playersURL = response.encodeURL( AdminServlet.ALIAS + "?r=players" );
-    String savePlayerURL = response.encodeURL( AdminServlet.ALIAS + "?r=savePlayer" );
-    String savePaymentURL = response.encodeURL( AdminServlet.ALIAS + "?r=savePlayerPayment" );
-    String deletePlayerURL = response.encodeURL( AdminServlet.ALIAS + "?r=deletePlayer" );
+    String playersURL = response.encodeURL("goAdmin?r=players");
+    String savePlayerURL = response.encodeURL("goAdmin?r=savePlayer");
+    String savePaymentURL = response.encodeURL("goAdmin?r=savePlayerPayment");
+    String deletePlayerURL = response.encodeURL("goAdmin?r=deletePlayer");
 %>
 
 <h2>Player List (<%=players.size()%> players)</h2>

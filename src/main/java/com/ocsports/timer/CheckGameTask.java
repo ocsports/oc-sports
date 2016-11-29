@@ -1,66 +1,57 @@
-/*
- * Title         CheckGameTask.java
- * Created       September 26, 2006
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.timer;
- */
 package com.ocsports.timer;
 
-import java.util.*;
-import org.apache.log4j.Logger;
+import com.ocsports.core.ProcessException;
+import com.ocsports.models.GameModel;
+import com.ocsports.sql.PoolSQLController;
+import com.ocsports.sql.SeasonSQLController;
+import java.util.Collection;
+import java.util.Iterator;
 
-import com.ocsports.core.*;
-import com.ocsports.models.*;
-import com.ocsports.sql.*;
-import com.ocsports.servlets.TimerServlet;
+/**
+ * Scheduled task to set default picks for users who did not make selections; look
+ * for games which are already in progress but have not already been processed
+ * by this same task earlier
+ * @author paulcharlton
+ */
+public class CheckGameTask extends TimerTask {
+    private SeasonSQLController seasonSql;
+    private PoolSQLController poolSql;
 
-public class CheckGameTask extends TimerTask implements ITimerTask {
-    private static final  String CLASS_NAME = CheckGameTask.class.getName();
-    private static final  Logger log = Logger.getLogger( CLASS_NAME );
-
-    private SeasonSQLController seasonSQL;
-    private PoolSQLController poolSQL;
-
-    public void run(boolean ignoreTimes) {
-        run();
-    }
-
+    /**
+     * execute the task and do not let exceptions leak as they will destroy the timer object
+     */
     public void run() {
         try {
-            seasonSQL = new SeasonSQLController();
-            poolSQL = new PoolSQLController();
+            initTask();
+            seasonSql = new SeasonSQLController();
+            poolSql = new PoolSQLController();
             
-            Collection gamesStarted = seasonSQL.findGamesToSetDefaultPicks();
+            Collection gamesStarted = seasonSql.findGamesToSetDefaultPicks();
             if(gamesStarted == null || gamesStarted.isEmpty()) {
                 return;
             }
-            addTaskMessage(gamesStarted.size() + " games have started...");
+            addTaskMessage(gamesStarted.size() + " games have started");
 
             Iterator iter = gamesStarted.iterator();
             while(iter.hasNext()) {
                 GameModel gm = (GameModel)iter.next();
                 //set default pick for users who haven't chosen a team yet
-                poolSQL.setGameDefaultPicks(gm);
-                //update game so we do NOT pick up on next run
-                seasonSQL.setGameDefaultStatus(gm.getId(), 1);
+                poolSql.setGameDefaultPicks(gm);
+                //update game record so we do NOT pick up on next run
+                seasonSql.setGameDefaultStatus(gm.getId(), 1);
                 addTaskMessage("Default picks set for game " + gm.getId());
             }
-            addTaskMessage(CLASS_NAME + " task completed.");
+            timerTaskCompleted();
         }
-        catch(ProcessException ex) {
-            addTaskMessage(CLASS_NAME + " task failed: " + ex.getExceptionTypeClass().getName() + "-" + ex.getMessage());
+        catch(ProcessException pe) {
+            timerTaskFailed(pe);
         }
         catch(Throwable t) {
-            addTaskMessage(CLASS_NAME + " task failed: Throwable caught: " + t.getMessage());
+            timerTaskFailed(t);
         }
         finally {
-            seasonSQL = null;
-            poolSQL = null;
+            seasonSql = null;
+            poolSql = null;
         }
-    }
-
-    private void addTaskMessage(String msg) {
-        log.debug(msg);
-        TimerServlet.timerMessages.add(new TimerMessageModel(TimerServlet.TIMER_INFO, CLASS_NAME, msg));
     }
 }

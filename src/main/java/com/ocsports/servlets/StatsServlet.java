@@ -12,13 +12,11 @@ import java.util.Collection;
 import com.ocsports.core.*;
 import com.ocsports.sql.*;
 import com.ocsports.models.*;
-import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public class StatsServlet extends ServletBase {
-    public static String ALIAS  = "goStats";
     public static final String DETAIL_PAGE_ATTR = "detailPage";
     public static final String MENU_ITEM_ATTR   = "menuItem";
 	

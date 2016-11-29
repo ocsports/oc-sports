@@ -16,7 +16,6 @@ import com.ocsports.models.UserModel;
 import com.ocsports.models.LeagueModel;
 
 public class UserServlet extends ServletBase {
-    public static String      ALIAS  = "goUser";
 
     public UserServlet() {
 		super();

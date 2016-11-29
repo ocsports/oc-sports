@@ -1,115 +1,74 @@
-/*
- * Title         CheckSeriesTask.java
- * Created       September 26, 2006
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.timer;
- */
 package com.ocsports.timer;
 
-import java.util.*;
-import org.apache.log4j.Logger;
+import com.ocsports.core.ProcessException;
+import com.ocsports.core.SportTypes;
+import com.ocsports.models.SeasonModel;
+import com.ocsports.models.SeasonSeriesModel;
+import com.ocsports.sql.PoolSQLController;
+import com.ocsports.sql.SeasonSQLController;
+import java.util.Collection;
+import java.util.Iterator;
 
-import com.ocsports.core.*;
-import com.ocsports.models.*;
-import com.ocsports.sql.*;
-import com.ocsports.servlets.TimerServlet;
+/**
+ * Scheduled task for adding lock and survivor picks for users who made no selections
+ * for the current series which just concluded; also conduct any other general cleanup 
+ * for the current series.
+ * @author paulcharlton
+ */
+public class CheckSeriesTask extends TimerTask {
+    private SeasonSQLController seasonSql;
+    private PoolSQLController poolSql;
 
-public class CheckSeriesTask extends TimerTask implements ITimerTask {
-    private static final  String CLASS_NAME = CheckSeriesTask.class.getName();
-    private static final  Logger log = Logger.getLogger( CLASS_NAME );
-
-    private String        msg = null;
-
+    /**
+     * execute the task and do not let exceptions leak as they will destroy the timer object
+     */
     public void run() {
-        this.run(false);
-    }
-    
-    public void run(boolean ignoreTimes) {
         try {
-            log.debug("STARTING");
+            initTask();
+            seasonSql = new SeasonSQLController();
+            poolSql = new PoolSQLController();
 
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(new java.util.Date());
-            int currentHour = cal.get(Calendar.HOUR_OF_DAY);
-            cal = null;
-
-            //Check the time, only run this task if between 4:00PM and 10:00PM
-            if(ignoreTimes || (currentHour >= 16 && currentHour <= 22)) {
-                this.getCurrentSeries();
-                TimerServlet.timerMessages.add(new TimerMessageModel(TimerServlet.TIMER_INFO, CLASS_NAME, "Task completed."));
-            }
-            log.debug("COMPLETED");
+            this.getCurrentSeries();
+            timerTaskCompleted();
         }
         catch(ProcessException pe) {
-            log.debug(pe.getStackTraceAsString());
-            TimerServlet.timerMessages.add(new TimerMessageModel(TimerServlet.TIMER_ERROR, CLASS_NAME, "Task failed: " + pe.getExceptionTypeClass().getName() + "-" + pe.getMessage()));
+            timerTaskFailed(pe);
         }
         catch(Throwable t) {
-            log.debug("Throwable caught: " + t.getMessage());
-            TimerServlet.timerMessages.add(new TimerMessageModel(TimerServlet.TIMER_ERROR, CLASS_NAME, "Task failed: Throwable caught: " + t.getMessage()));
+            timerTaskFailed(t);
+        }
+        finally {
+            seasonSql = null;
+            poolSql = null;
         }
     }
     
+    /**
+     * get the current series for each active season and check the flag if cleanup
+     * has already been done; if not, execute the cleanup
+     * @throws ProcessException 
+     */
     private void getCurrentSeries() throws ProcessException {
-        SeasonSQLController seasonSQL = null;
-        PoolSQLController poolSQL = null;
-        try {
-            seasonSQL = new SeasonSQLController();
-            poolSQL = new PoolSQLController();
+        Collection seasons = seasonSql.getSeasons(SportTypes.TYPE_NFL_FOOTBALL, true);
 
-            Collection seasons = seasonSQL.getSeasons(0, true);
-            if(seasons != null && !seasons.isEmpty()) {
-                Iterator iter = seasons.iterator();
-                int seriesId = -1;
-                while(iter.hasNext()) {
-                    SeasonModel sm = (SeasonModel)iter.next();
-                    seriesId = seasonSQL.getCurrentSeries(sm.getId());
-                    SeasonSeriesModel ssm = seasonSQL.getSeasonSeriesModel(seriesId);
-                    if(!ssm.isUserCleanup()) {
-                        this.checkUserSeries(seriesId);
-                    }
+        if(seasons == null || seasons.isEmpty()) {
+            return;
+        }
+
+        Iterator iter = seasons.iterator();
+        while(iter.hasNext()) {
+            SeasonModel sm = (SeasonModel)iter.next();
+            int seriesId = seasonSql.getCurrentSeries(sm.getId());
+            SeasonSeriesModel ssm = seasonSql.getSeasonSeriesModel(seriesId);
+            if(!ssm.isUserCleanup()) {
+                boolean allGamesStarted = seasonSql.allSeriesGamesStarted(seriesId);
+                if(allGamesStarted) {
+                    addTaskMessage("Final cleanup for season series " + seriesId);
+                    poolSql.cleanupUserSeries(seriesId);
+                    //set the status so we don't perform on this series any longer
+                    seasonSql.setSeriesCleanupStatus(seriesId, 1);
                 }
             }
-        }
-        catch(Exception e) {
-            if(e instanceof ProcessException) 
-                throw (ProcessException)e;
-            else
-                throw new ProcessException(e);
-        }
-        finally {
-            if(seasonSQL != null) seasonSQL.closeConnection();
-            if(poolSQL != null) poolSQL.closeConnection();
-        }
-    }
-    
-    private void checkUserSeries(int seriesId) throws ProcessException {
-        SeasonSQLController seasonSQL = null;
-        PoolSQLController poolSQL = null;
-        try {
-            seasonSQL = new SeasonSQLController();
-            poolSQL = new PoolSQLController();
-
-            //check if all games have started for the series
-            boolean allGamesStarted = seasonSQL.allSeriesGamesStarted(seriesId);
-            if(allGamesStarted) {
-                msg = "Cleaning User Series; seriesId=" + seriesId;
-                log.debug(msg);
-                TimerServlet.timerMessages.add(new TimerMessageModel(TimerServlet.TIMER_INFO, CLASS_NAME, msg));
-                poolSQL.cleanupUserSeries(seriesId);
-                //set the status so we don't perform on this series any longer
-                seasonSQL.setSeriesCleanupStatus(seriesId, 1);
-            }
-        }
-        catch(Exception e) {
-            if(e instanceof ProcessException) 
-                throw (ProcessException)e;
-            else
-                throw new ProcessException(e);
-        }
-        finally {
-            if(seasonSQL != null) seasonSQL.closeConnection();
-            if(poolSQL != null) poolSQL.closeConnection();
         }
     }
 }

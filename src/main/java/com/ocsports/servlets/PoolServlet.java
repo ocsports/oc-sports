@@ -17,7 +17,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public class PoolServlet extends ServletBase {
-    public static String         ALIAS  = "goPool";
     public static final String   DETAIL_PAGE_ATTR = "detailPage";
     public static final long     FORUM_MAX_LENGTH = 2000;
 

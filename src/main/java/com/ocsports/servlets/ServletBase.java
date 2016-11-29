@@ -1,55 +1,30 @@
 package com.ocsports.servlets;
 
-import java.lang.reflect.Method;
-import java.io.IOException;
-import javax.servlet.*;
-import javax.servlet.http.*;
-
-import com.ocsports.core.*;
+import com.ocsports.core.AttributeList;
+import com.ocsports.core.JSPPages;
+import com.ocsports.core.ProcessException;
 import com.ocsports.models.UserModel;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import org.apache.log4j.Logger;
 
 /**
  * Base class for all servlets within this project;  
  * override GET and POST HTTP requests but no others (PUT, DELETE, etc...)
  * @author     Paul Charlton
- * @created    September, 2014
  */
 public abstract class ServletBase extends HttpServlet {
-
-	private Logger log = Logger.getLogger(ServletBase.class.getName());
+    protected final Logger log = Logger.getLogger( this.getClass().getName() );
 
 	abstract void defaultAction(HttpServletRequest request, HttpServletResponse response, HttpSession session);
-
-	/**
-	 * DO NOT USE INSTANCE VARIABLES
-	 * only one instance of this class is created and shared among all requests
-	 */
-	public ServletBase() {
-	}
-
-	/**
-	 * @override - called once when the Servlet is first started;  this is NOT called for each request
-	 * @param config
-	 * @throws ServletException 
-	 */
-	public void init(ServletConfig config) throws ServletException {
-		super.init(config);
-	}
-	
-	/**
-	 * @override - default request action called just before doGet or doPost
-	 * @param request
-	 * @param response
-	 * @throws ServletException 
-	 */
-	public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		try {
-			super.service(request, response);
-		} catch (java.io.IOException ioe) {
-			this.handleException(request, response, null, ioe);
-		}
-	}
 
 	/**
 	 * @override - process HTTP GET requests
@@ -57,7 +32,7 @@ public abstract class ServletBase extends HttpServlet {
 	 * @param response 
 	 */
 	public void doGet(HttpServletRequest request, HttpServletResponse response) {
-		this.processRequest(request, response);
+		processRequest(request, response);
 	}
 
 	/**
@@ -66,7 +41,7 @@ public abstract class ServletBase extends HttpServlet {
 	 * @param response 
 	 */
 	public void doPost(HttpServletRequest request, HttpServletResponse response) {
-		this.processRequest(request, response);
+		processRequest(request, response);
 	}
 
 	/**
@@ -81,12 +56,12 @@ public abstract class ServletBase extends HttpServlet {
 
 			// something really bad happened if any of these objects are invalid or null
 			if (request == null || response == null || session == null) {
-				throw new ProcessException("An unexpected error has occurred.  Http request object(s) are missing.");
+				throw new ProcessException("Http request object(s) are missing.");
 			}
 
 			String action = request.getParameter("r");
 			if (action == null || action.length() == 0) {
-				this.defaultAction(request, response, session);
+				defaultAction(request, response, session);
 				return;
 			}
 
@@ -94,13 +69,25 @@ public abstract class ServletBase extends HttpServlet {
 				Method method = this.getClass().getDeclaredMethod(action, new Class[]{HttpServletRequest.class, HttpServletResponse.class, HttpSession.class});
 				method.invoke(this, new Object[]{request, response, session});
 			}
-			catch( NoSuchMethodException e) {
-				this.defaultAction(request, response, session);
+			catch(NoSuchMethodException e) {
+				defaultAction(request, response, session);
 			}
+            catch (InvocationTargetException ex) {
+				defaultAction(request, response, session);
+            }
 		}
-		catch (Exception e) {
-			this.handleException(request, response, session, e);
-		}
+		catch (ProcessException pe) {
+			handleException(request, response, session, pe);
+		} 
+        catch (IllegalAccessException e) {
+            handleException(request, response, session, e);
+        }
+        catch (IllegalArgumentException e) {
+            handleException(request, response, session, e);
+        }
+        catch (SecurityException e) {
+            handleException(request, response, session, e);
+        }
 	}
 
 	/**
@@ -112,59 +99,53 @@ public abstract class ServletBase extends HttpServlet {
 	 */
 	protected void handleException(HttpServletRequest request, HttpServletResponse response, HttpSession session, Exception e) {
 		try {
-			ProcessException pe = null;
-			if (e instanceof ProcessException) {
-				pe = (ProcessException) e;
-			} else {
-				pe = new ProcessException(e);
-			}
+			ProcessException pe;
+            if (e == null) {
+                pe = new ProcessException("null exception passed into handleException() method");
+            }
+            else if (e instanceof ProcessException) {
+                pe = (ProcessException)e;
+            }
+            else {
+                pe = new ProcessException(e);
+            }
 
-
-			String hdr = new String(new char[80]).replaceAll("\0", "-") + "\n";
+			String delim = new String(new char[80]).replaceAll("\0", "-") + "\n";
 
 			StringBuffer buf = new StringBuffer();
-			buf.append("\n" + hdr);
-			buf.append("ServletBase.handleException()\n");
-			buf.append(hdr);
-
-			buf.append("UserModel values:\n");
+			buf.append(delim);
+			buf.append("Exception\n");
+            buf.append("  exceptionTypeClass: ").append(pe.getExceptionTypeClass().getName()).append("\n");
+            buf.append("  exceptionType: ").append(pe.getExceptionType()).append("\n");
+            buf.append("  message: ").append(pe.getMessage()).append("\n");
+			buf.append("  - UserModel\n");
 			if (session != null && session.getAttribute("UserModel") != null) {
-				UserModel um = (UserModel) session.getAttribute("UserModel");
-				buf.append("userId: " + um.getUserId() + "\n");
-				buf.append("name: " + um.getFullName() + "\n");
-				buf.append("loginId: " + um.getLoginId() + "\n");
-				buf.append("userEmail: " + um.getEmail() + "\n");
-				buf.append("\n");
+				UserModel um = (UserModel)session.getAttribute("UserModel");
+				buf.append("    userId: ").append(um.getUserId()).append("\n");
+				buf.append("    name: ").append(um.getFullName()).append("\n");
+				buf.append("    loginId: ").append(um.getLoginId()).append("\n");
+				buf.append("    userEmail: ").append(um.getEmail()).append("\n");
 			}
-
-			buf.append("HttpSession values:\n");
+			buf.append("  - HttpSession\n");
 			if (session != null) {
-				buf.append("sessionId: " + session.getId() + "\n");
-				buf.append("\n");
+				buf.append("    sessionId: ").append(session.getId()).append("\n");
 			}
-
-			buf.append("HttpServletRequest values:\n");
+			buf.append("  - HttpServletRequest\n");
 			if (request != null) {
-				buf.append("query: " + request.getQueryString() + " (" + request.getMethod() + ")\n");
-				buf.append("remoteAddress: " + request.getRemoteAddr() + "\n");
-				buf.append("user-agent: " + request.getHeader("user-agent") + "\n");
-				buf.append("\n");
+				buf.append("    query: ").append(request.getQueryString()).append("\n");
+				buf.append("    method: ").append(request.getMethod()).append(")\n");
+				buf.append("    remoteAddress: ").append(request.getRemoteAddr()).append("\n");
+				buf.append("    user-agent: ").append(request.getHeader("user-agent")).append("\n");
 			}
+            buf.append(pe.getStackTraceAsString()).append("\n");
 
-			buf.append("ProcessException values:\n");
-			if (pe != null) {
-				buf.append("exceptionTypeClass: " + pe.getExceptionTypeClass().getName() + "\n");
-				buf.append("exceptionType: " + pe.getExceptionType() + "\n");
-				buf.append("message: " + pe.getMessage() + "\n");
-				buf.append(pe.getStackTraceAsString() + "\n");
-				buf.append("\n");
-			}
-
-			// log all error info into the log file
+            buf.append(delim);
 			log.error( buf.toString() );
 
-			request.setAttribute("exception", pe);
-			this.sendToJSP(JSPPages.ERROR_PAGE, request, response, session);
+            if(request != null) {
+                request.setAttribute("exception", pe);
+                this.sendToJSP(JSPPages.ERROR_PAGE, request, response, session);
+            }
 		} catch (Exception e2) {
 			// something really, really, really went wrong here
 			log.error( e2.getMessage() );
@@ -176,13 +157,11 @@ public abstract class ServletBase extends HttpServlet {
 	 * @param url
 	 * @param request
 	 * @param response
-	 * @param session
-	 * @throws ProcessException 
+	 * @param session 
 	 */
 	protected void sendToJSP(String url, HttpServletRequest request, HttpServletResponse response, HttpSession session) {
 		try {
 			ServletContext context = this.getServletContext();
-
 			url = checkViewType(url, request, session);
 			RequestDispatcher dispatcher = context.getRequestDispatcher(url);
 			dispatcher.forward(request, response);
@@ -199,8 +178,7 @@ public abstract class ServletBase extends HttpServlet {
 	 * @param url
 	 * @param request
 	 * @param response
-	 * @param session
-	 * @throws ProcessException 
+	 * @param session 
 	 */
 	protected void sendRedirect(String url, HttpServletRequest request, HttpServletResponse response, HttpSession session) {
 		try {
@@ -215,8 +193,8 @@ public abstract class ServletBase extends HttpServlet {
 	 * change the URL from a standard to a mobile url if on a mobile phone or the attribute is forced
 	 * @param url
 	 * @param request
-	 * @param session
-	 * @throws ProcessException 
+	 * @param session 
+     * @return  the updated url if altered based on the user-agent
 	 */
 	protected String checkViewType(String url, HttpServletRequest request, HttpSession session) {
 		String viewType = (String) session.getAttribute( AttributeList.SESS_VIEW_TYPE );
@@ -224,7 +202,7 @@ public abstract class ServletBase extends HttpServlet {
 			viewType = getViewType(request);
 			session.setAttribute(AttributeList.SESS_VIEW_TYPE, viewType);
 		}
-		if (viewType.equals("MOBILE") && url.indexOf("/admin/") < 0) {
+		if (viewType.equals("MOBILE") && url.indexOf("/admin/") == -1) {
 			url = url.replaceAll("/std/", "/mobile/");
 		}
 		return url;
@@ -236,9 +214,6 @@ public abstract class ServletBase extends HttpServlet {
 	 * @return 
 	 */
 	protected String getViewType(HttpServletRequest request) {
-		int i = 0;
-		String[] types = null;
-
 		// check if this header exists from the user agent
 		String xwap = (String) request.getHeader("x-wap-profile");
 		if (xwap != null && xwap.length() > 0) {
@@ -249,10 +224,10 @@ public abstract class ServletBase extends HttpServlet {
 		String acc = (String) request.getHeader("accept");
 		if (acc != null && acc.length() > 0) {
 			acc = acc.toLowerCase();
-			if (acc.indexOf("/wap.") >= 0) {
+			if (acc.indexOf("/wap.") > -1) {
 				return "MOBILE";
 			}
-			if (acc.indexOf(".wap") >= 0) {
+			if (acc.indexOf(".wap") > -1) {
 				return "MOBILE";
 			}
 		}
@@ -262,19 +237,19 @@ public abstract class ServletBase extends HttpServlet {
 		agent = (agent == null ? "" : agent.toLowerCase());
 
 		//these ARE NOT mobile device types which could return a match below
-		types = new String[]{"Creative AutoUpdate", "OfficeLiveConnector", "MSIE 8.0", "OptimizedIE8", "MSN Optimized", "Swapper"};
-		for (i = 0; i < types.length; i++) {
+		String[] types = new String[]{"Creative AutoUpdate", "OfficeLiveConnector", "MSIE 8.0", "OptimizedIE8", "MSN Optimized", "Swapper"};
+		for (int i=0; i<types.length; i++) {
 			String searchFor = types[i].toLowerCase();
-			if (agent.indexOf(searchFor) >= 0) {
+			if (agent.indexOf(searchFor) > -1) {
 				return "STD";
 			}
 		}
 
 		// these ARE mobile device types
 		types = new String[]{"midp", "j2me", "avantg", "docomo", "novarra", "palmos", "palmsource", "240x320", "opwv", "chtml", "pda", "windows ce", "mmp/", "blackberry", "mib/", "symbian", "wireless", "nokia", "hand", "mobi", "phone", "cdm", "up.", "audio", "SIE-", "SEC-", "samsung", "HTC", "mot-", "mitsu", "sagem", "sony", "alcatel", "lg", "erics", "vx", "NEC", "philips", "mmm", "xx", "panasonic", "sharp", "wap", "sch", "rover", "pocket", "benq", "java", "pt", "pg", "vox", "amoi", "bird", "compal", "kg", "voda", "sany", "kdd", "dbt", "sendo", "sgh", "gradi", "jb", "moto"};
-		for (i = 0; i < types.length; i++) {
+		for (int i=0; i<types.length; i++) {
 			String searchFor = types[i].toLowerCase();
-			if (agent.indexOf(searchFor) >= 0) {
+			if (agent.indexOf(searchFor) > -1) {
 				return "MOBILE";
 			}
 		}

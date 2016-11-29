@@ -1,72 +1,68 @@
-/*
- * Title         CheckNFLScoresTask.java
- * Created       September 26, 2006
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.timer;
-                 2016-11-14 - moved url to nfl.com and parse json instead of html source code
- */
 package com.ocsports.timer;
 
-import java.util.*;
-import org.apache.log4j.Logger;
-
-import com.ocsports.core.*;
-import com.ocsports.sql.*;
-import com.ocsports.models.*;
-import com.ocsports.servlets.TimerServlet;
+import com.ocsports.core.MyEmailer;
+import com.ocsports.core.MyHTTPClient;
+import com.ocsports.core.ProcessException;
+import com.ocsports.core.PropList;
+import com.ocsports.core.PropertiesHelper;
+import com.ocsports.core.SportTypes;
+import com.ocsports.models.GameModel;
+import com.ocsports.models.TeamModel;
+import com.ocsports.sql.PoolSQLController;
+import com.ocsports.sql.SeasonSQLController;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Iterator;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 
-public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
-    private static final String URL = "http://www.nfl.com/liveupdate/scorestrip/scorestrip.json";
-    private static final String CLASS_NAME = CheckNFLScoresTask.class.getName();
-    private static final Logger log = Logger.getLogger( CLASS_NAME );
+public class CheckNFLScoresTask extends TimerTask {
+    private final String url = "http://www.nfl.com/liveupdate/scorestrip/scorestrip.json";
+    private SeasonSQLController seasonSql;
+    private PoolSQLController poolSql;
 
-    private SeasonSQLController seasonSQL;
-    private PoolSQLController poolSQL;
-    private Collection gamesInProgress;
-
-    public void run(boolean ignoreTimes) {
-        run();
-    }
-
+    /**
+     * execute the task and do not let exceptions leak as they will destroy the timer object
+     */
     public void run() {
         try {
-            seasonSQL = new SeasonSQLController();
-            poolSQL = new PoolSQLController();
+            initTask();
+            seasonSql = new SeasonSQLController();
+            poolSql = new PoolSQLController();
             
-            gamesInProgress = seasonSQL.findGamesInProgress( SportTypes.TYPE_NFL_FOOTBALL );
+            Collection gamesInProgress = seasonSql.findGamesInProgress( SportTypes.TYPE_NFL_FOOTBALL );
             if(gamesInProgress == null || gamesInProgress.size() <= 0) {
                 return;
             }
-            addTaskMessage(gamesInProgress.size() + " games in progress...");
 
-            postScores();
-            addTaskMessage(CLASS_NAME + " task completed.");
+            addTaskMessage(gamesInProgress.size() + " games in progress");
+            postScores(gamesInProgress);
+            timerTaskCompleted();
         }
-        catch(ProcessException ex) {
-            addTaskMessage(CLASS_NAME + " task failed: " + ex.getExceptionTypeClass().getName() + "-" + ex.getMessage());
+        catch(ProcessException pe) {
+            timerTaskFailed(pe);
         }
         catch(Throwable t) {
-            addTaskMessage(CLASS_NAME + " task failed: Throwable caught: " + t.getMessage());
+            timerTaskFailed(t);
         }
         finally {
-            seasonSQL = null;
-            poolSQL = null;
+            seasonSql = null;
+            poolSql = null;
         }
     }
 
-    private void addTaskMessage(String msg) {
-        log.debug(msg);
-        TimerServlet.timerMessages.add(new TimerMessageModel(TimerServlet.TIMER_INFO, CLASS_NAME, msg));
-    }
-
-    private void postScores() throws ProcessException {
-        String pageSource = MyHTTPClient.getURL(URL);
+    /**
+     * retrieve external json data and parse each game, searching for games which
+     * have completed since the last iteration; if found, post scores and update the
+     * game record
+     * @param gamesInProgress  the collection of GameModels which are currently in progress
+     * @throws ProcessException 
+     */
+    private void postScores(Collection gamesInProgress) throws ProcessException {
+        String pageSource = MyHTTPClient.getURL(url);
         if(pageSource == null || pageSource.length() == 0) {
-            throw new ProcessException("Unable to retrieve web page (" + URL + ")");
+            throw new ProcessException("Unable to retrieve web page (" + url + ")");
         }
         // some array elements are missing a value, replace with empty string
         String properJson = pageSource.replaceAll(",,", ",\"\",");
@@ -76,13 +72,11 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
             JSONParser parser = new JSONParser();
             jsonRoot = (JSONObject)parser.parse(properJson);
         } catch (org.json.simple.parser.ParseException ex) {
-            addTaskMessage("unable to parse NFL json: " + ex.getMessage());
-            return;
+            throw new ProcessException("unable to parse json: " + ex.getMessage());
         }
         JSONArray jsonGames = (JSONArray)jsonRoot.get("ss");
         if (jsonGames == null || jsonGames.isEmpty()) {
-            addTaskMessage("no current games found in json");
-            return;
+            throw new ProcessException("no current games found in json");
         }
 
         // loop through each current game 
@@ -91,8 +85,8 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
             JSONArray gameData = (JSONArray)it.next();
             
             String gameStatus = (String)gameData.get(2);
-            if (gameStatus.toUpperCase().indexOf("FINAL") > -1) {
-                // game is stil in progress or has not started; skip it
+            if (gameStatus.toUpperCase().indexOf("FINAL") > -1 ||
+                gameStatus.toUpperCase().indexOf("F/") > -1) {
                 continue;
             }
 
@@ -107,12 +101,16 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
                 homeScore = Integer.parseInt( (String)gameData.get(7) );
             }
             catch (NumberFormatException ex) {
-                addTaskMessage("Unable to parse game json: " + ex.getMessage());
+                addTaskMessage("unable to parse final game scores: " + ex.getMessage());
                 continue;
             }
 
-            TeamModel awayTeam = seasonSQL.findTeam(null, null, awayAbrv);
-            TeamModel homeTeam = seasonSQL.findTeam(null, null, homeAbrv);
+            TeamModel awayTeam = seasonSql.findTeam(null, null, awayAbrv);
+            TeamModel homeTeam = seasonSql.findTeam(null, null, homeAbrv);
+            if (awayTeam == null || homeTeam == null) {
+                addTaskMessage("unable to identify team(s) for game " + awayAbrv + " at " + homeAbrv);
+                continue;
+            }
 
             Iterator iter = gamesInProgress.iterator();
             while(iter.hasNext()) {
@@ -123,9 +121,8 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
                     gm.setPosted(true);
                     addTaskMessage("Posting score for game " + gm.getId() + ": " + awayTeam.getAbrv() + " @ " + homeTeam.getAbrv() + "," + gm.getAwayScore() + "-" + gm.getHomeScore());
                     try {
-                        seasonSQL.updateGame(gm);
-                        poolSQL.postGame(gm);
-                        
+                        seasonSql.updateGame(gm);
+                        poolSql.postGame(gm);
                         sendGamePostedEmail( gm, awayTeam, homeTeam );
                     }
                     catch(ProcessException pe2) {
@@ -137,6 +134,13 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
         }
     }
     
+    /**
+     * send an email to the site administrators informing that a game score was posted
+     * @param gm  the game record just posted
+     * @param awayTeam  away team information
+     * @param homeTeam  home team information
+     * @return  boolean if the email was sent successfully
+     */
     private boolean sendGamePostedEmail(GameModel gm, TeamModel awayTeam, TeamModel homeTeam) {
 		String[] TOs = PropertiesHelper.getProperty( PropList.ADMIN_POST_SCORES_EMAIL ).split(",");
 
@@ -144,7 +148,7 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
 		fmt.applyPattern("h:mm a");
 		String currTime = fmt.format( new java.util.Date() );
 
-		String subject = "Game score posted for: " + awayTeam.getAbrv() + " at " + homeTeam.getAbrv();
+		String msgSubject = "Game score posted for: " + awayTeam.getAbrv() + " at " + homeTeam.getAbrv();
         String msgScore;
 		if( gm.getHomeScore() > gm.getAwayScore() ) {
 			msgScore = homeTeam.getAbrv() + " " + gm.getHomeScore() + " - " + awayTeam.getAbrv() + " " + gm.getAwayScore();
@@ -155,11 +159,11 @@ public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
         String msgHeader = "Final score: ";
         String msgFooter = "\n\n" + "NFL game score has been automatically posted at " + currTime + ".";
 
-        StringBuffer msg = new StringBuffer();
-		msg.append( msgHeader );
-        msg.append( msgScore );
-		msg.append( msgFooter );
+        StringBuffer msgBody = new StringBuffer();
+		msgBody.append( msgHeader );
+        msgBody.append( msgScore );
+		msgBody.append( msgFooter );
 
-        return MyEmailer.sendEmailMsg(TOs, null, null, subject, msg.toString(), null);
+        return MyEmailer.sendEmailMsg(TOs, null, null, msgSubject, msgBody.toString(), null);
 	}
 }

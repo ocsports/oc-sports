@@ -15,7 +15,6 @@ import com.ocsports.models.*;
 import com.ocsports.sql.*;
 
 public class AdminServlet extends ServletBase {
-    public static final String ALIAS = "goAdmin";
     public static final String LOGIN_SESSION_ATTR = "sessAdminLogin";
     public static final String DETAIL_PAGE_ATTR = "detailPage";
 
@@ -650,7 +649,7 @@ public class AdminServlet extends ServletBase {
                 }
             }
 
-            this.sendRedirect(AdminServlet.ALIAS + "?r=viewSeason&seasonId=" + seasonId + "&seriesId=" + seriesId, request, response, session);
+            this.sendRedirect("goAdmin?r=viewSeason&seasonId=" + seasonId + "&seriesId=" + seriesId, request, response, session);
         }
         catch(Exception e) {
             throw new ProcessException(e);
@@ -671,7 +670,7 @@ public class AdminServlet extends ServletBase {
             int gameId = Integer.parseInt( request.getParameter("gameId") );
 
             sqlCtrlr.deleteGame(gameId);
-            this.sendRedirect(AdminServlet.ALIAS + "?r=viewSeason&seasonId=" + seasonId + "&seriesId=" + seriesId, request, response, session);
+            this.sendRedirect("goAdmin?r=viewSeason&seasonId=" + seasonId + "&seriesId=" + seriesId, request, response, session);
         }
         catch(Exception e) {
             throw new ProcessException(e);
