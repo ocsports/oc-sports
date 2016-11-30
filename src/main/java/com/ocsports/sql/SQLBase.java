@@ -15,19 +15,22 @@ import org.apache.log4j.Logger;
 
 public abstract class SQLBase {
 
-    private static final Logger log = Logger.getLogger(SQLBase.class.getName());
+    private static DataSource datasource = null;
+    private static int connCount = 0;
 
-    private java.sql.Connection conn;
-    private java.sql.PreparedStatement stmt;
     protected java.sql.ResultSet rs;
 
-    private static DataSource datasource = null;
+    private final Logger log = Logger.getLogger(this.getClass().getName());
+    private java.sql.Connection conn;
+    private java.sql.PreparedStatement stmt;
 
     public SQLBase() {
     }
 
     private boolean getDataSource() {
-        if (datasource != null) return true;
+        if (datasource != null) {
+            return true;
+        }
 
         try {
             InitialContext initialContext = new InitialContext();
@@ -52,6 +55,9 @@ public abstract class SQLBase {
             }
             if (conn == null || conn.isClosed()) {
                 conn = datasource.getConnection();
+                if (++connCount > 1) {
+                    log.info("current open connections(++): " + connCount);
+                }
             }
             // always reset the statement and results when calling openConnection;
             resetStatement();
@@ -62,12 +68,21 @@ public abstract class SQLBase {
 
     public void closeConnection() {
         try {
-            if (conn != null && !conn.isClosed() && !conn.getAutoCommit()) {
-                conn.commit();
+            if (rs != null) {
+                rs.close();
             }
-            if (rs != null) rs.close();
-            if (stmt != null) stmt.close();
-            if (stmt != null) conn.close();
+            if (stmt != null) {
+                stmt.close();
+            }
+            if (conn != null) {
+                if (!conn.isClosed() && !conn.getAutoCommit()) {
+                    conn.commit();
+                }
+                conn.close();
+                if (--connCount > 1) {
+                    log.info("current open connections(--): " + connCount);
+                }
+            }
         } catch (SQLException sqle) {
             log.error("failed to close SQL connection properly: " + sqle.getMessage());
         } finally {
@@ -79,24 +94,28 @@ public abstract class SQLBase {
 
     public void executeUpdate(String sql, Object[] params) throws ProcessException {
         try {
-            this.openConnection();
+            openConnection();
             stmt = conn.prepareStatement(sql);
-            this.addParameters(params);
+            addParameters(params);
             stmt.executeUpdate();
         } catch (SQLException sqle) {
             throw new ProcessException(sqle);
+        } finally {
+            closeConnection();
         }
     }
 
     public ResultSet executeQuery(String sql, Object[] params) throws ProcessException {
         try {
-            this.openConnection();
+            openConnection();
             stmt = conn.prepareStatement(sql);
-            this.addParameters(params);
+            addParameters(params);
             rs = stmt.executeQuery();
             return rs;
         } catch (SQLException sqle) {
             throw new ProcessException(sqle);
+        } finally {
+            // cannot close connection here; close will also close resultset and statement
         }
     }
 

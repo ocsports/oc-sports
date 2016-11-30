@@ -17,94 +17,99 @@ import java.util.Iterator;
 /**
  * Scheduled task to send email reminders to players who have made no selections
  * for the upcoming games.
+ *
  * @author paulcharlton
  */
 public class SendReminderTask extends TimerTask {
+
     private SeasonSQLController seasonSql;
     private PoolSQLController poolSql;
     private UserSQLController userSql;
 
     /**
-     * execute the task and do not let exceptions leak as they will destroy the timer object
+     * execute the task and do not let exceptions leak as they will destroy the
+     * timer object
      */
     public void run() {
         try {
-            initTask();
             seasonSql = new SeasonSQLController();
             poolSql = new PoolSQLController();
             userSql = new UserSQLController();
 
             this.getCurrentSeries();
             timerTaskCompleted();
-        }
-        catch(ProcessException pe) {
+        } catch (ProcessException pe) {
             timerTaskFailed(pe);
-        }
-        catch(Throwable t) {
+        } catch (Throwable t) {
             timerTaskFailed(t);
-        }
-        finally {
-            seasonSql = null;
-            poolSql = null;
-            userSql = null;
+        } finally {
+            if (seasonSql != null) {
+                seasonSql.closeConnection();
+            }
+            if (poolSql != null) {
+                poolSql.closeConnection();
+            }
+            if (userSql != null) {
+                userSql.closeConnection();
+            }
         }
     }
 
     private void getCurrentSeries() throws ProcessException {
         Collection seasons = seasonSql.getSeasons(0, true);
-        if(seasons == null || seasons.isEmpty()) {
+        if (seasons == null || seasons.isEmpty()) {
             return;
         }
-        
+
         Iterator iter = seasons.iterator();
-        while(iter.hasNext()) {
-            SeasonModel sm = (SeasonModel)iter.next();
+        while (iter.hasNext()) {
+            SeasonModel sm = (SeasonModel) iter.next();
             int seriesId = seasonSql.getCurrentSeries(sm.getId());
             SeasonSeriesModel ssm = seasonSql.getSeasonSeriesModel(seriesId);
             //have we already sent reminders for this series?
-            if(!ssm.isReminderEmail() && isTimeToSendReminders(seriesId)) {
+            if (!ssm.isReminderEmail() && isTimeToSendReminders(seriesId)) {
                 addTaskMessage("Sending reminders for season " + sm.getId() + ", series " + seriesId);
                 this.checkUserReminderStatus(seriesId, sm.getId());
                 seasonSql.setSeriesReminderStatus(seriesId, 1);
             }
         }
     }
-    
+
     private boolean isTimeToSendReminders(int seriesId) throws ProcessException {
         Collection games = seasonSql.getGamesBySeries(seriesId);
-        if(games == null || games.isEmpty()) {
+        if (games == null || games.isEmpty()) {
             return false;
         }
 
         Iterator iter = games.iterator();
-        while(iter.hasNext()) {
-            GameModel gm = (GameModel)iter.next();
+        while (iter.hasNext()) {
+            GameModel gm = (GameModel) iter.next();
             //if we are less than 24 hours away from kickoff of any game in this series
             // its time to send reminders
             long gameReminder = gm.getStartDate() - (1000l * 60l * 60l * 24l);
-            if(gameReminder < new java.util.Date().getTime()) {
+            if (gameReminder < new java.util.Date().getTime()) {
                 return true;
             }
         }
         return false;
     }
-    
+
     private void checkUserReminderStatus(int seriesId, int seasonId) throws ProcessException {
         ArrayList userEmails = new ArrayList();
 
         Collection leagues = userSql.getLeaguesBySeason(seasonId);
-        if(leagues != null && !leagues.isEmpty()) {
+        if (leagues != null && !leagues.isEmpty()) {
             Iterator iter = leagues.iterator();
-            while(iter.hasNext()) {
-                LeagueModel lm = (LeagueModel)iter.next();
+            while (iter.hasNext()) {
+                LeagueModel lm = (LeagueModel) iter.next();
                 Collection users = userSql.getUsersByLeague(lm.getId(), -1);
-                if(users != null && !users.isEmpty()) {
-                Iterator iter2 = users.iterator();
-                    while(iter2.hasNext()) {
-                        UserModel um = (UserModel)iter2.next();
-                        if(um.sendWarning() && poolSql.userNeedsReminder(um, seriesId)) {
+                if (users != null && !users.isEmpty()) {
+                    Iterator iter2 = users.iterator();
+                    while (iter2.hasNext()) {
+                        UserModel um = (UserModel) iter2.next();
+                        if (um.sendWarning() && poolSql.userNeedsReminder(um, seriesId)) {
                             userEmails.add(um.getEmail().trim());
-                            if(um.getEmail2() != null && !um.getEmail2().trim().equals(""))  {
+                            if (um.getEmail2() != null && !um.getEmail2().trim().equals("")) {
                                 userEmails.add(um.getEmail2().trim());
                             }
                         }
@@ -114,15 +119,17 @@ public class SendReminderTask extends TimerTask {
         }
         this.sendUserReminders(userEmails);
     }
-    
+
     private void sendUserReminders(Collection userEmails) throws ProcessException {
-        if(userEmails == null || userEmails.isEmpty()) return;
-        
+        if (userEmails == null || userEmails.isEmpty()) {
+            return;
+        }
+
         String[] BCCs = new String[userEmails.size()];
         int i = 0;
         Iterator iter = userEmails.iterator();
-        while(iter.hasNext()) {
-            BCCs[i] = (String)iter.next();
+        while (iter.hasNext()) {
+            BCCs[i] = (String) iter.next();
             i++;
         }
         addTaskMessage("Sending " + BCCs.length + " reminders");

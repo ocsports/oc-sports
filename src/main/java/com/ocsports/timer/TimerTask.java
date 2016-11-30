@@ -5,18 +5,13 @@ import com.ocsports.servlets.TimerServlet;
 import org.apache.log4j.Logger;
 
 public abstract class TimerTask extends java.util.TimerTask {
-    private Logger log;
 
-    /**
-     * initial work executed on each iteration of the scheduled task
-     */
-    protected void initTask() {
-        log = Logger.getLogger( this.getClass().getName() );
-    }
+    private Logger log = Logger.getLogger(this.getClass().getName());
 
     /**
      * add a general information message to the timer message queue
-     * @param msg  the message body to add
+     *
+     * @param msg the message body to add
      */
     protected void addTaskMessage(String msg) {
         addTaskMessage(TimerServlet.MSG_TYPE_INFO, msg);
@@ -24,8 +19,9 @@ public abstract class TimerTask extends java.util.TimerTask {
 
     /**
      * add a information message to the timer message queue; with specific type
-     * @param msgType  the type of message (i.e. TimerServlet.MSG_TYPE_INFO)
-     * @param msg  the message body to add
+     *
+     * @param msgType the type of message (i.e. TimerServlet.MSG_TYPE_INFO)
+     * @param msg the message body to add
      */
     protected void addTaskMessage(String msgType, String msg) {
         if (log != null) {
@@ -35,7 +31,8 @@ public abstract class TimerTask extends java.util.TimerTask {
     }
 
     /**
-     * add a general information message indicating the scheduled task has completed successfully
+     * add a general information message indicating the scheduled task has
+     * completed successfully
      */
     protected void timerTaskCompleted() {
         addTaskMessage(TimerServlet.MSG_TYPE_INFO, "Task completed");
@@ -43,6 +40,7 @@ public abstract class TimerTask extends java.util.TimerTask {
 
     /**
      * add a error message indicating the scheduled task failed to complete
+     *
      * @param t the exception object which caused the scheduled task to fail
      */
     protected void timerTaskFailed(Throwable t) {

@@ -13,9 +13,17 @@
     UserModel um = (UserModel)request.getAttribute("UserModel");
     if(um == null) um = new UserModel();
     
-    SeasonSQLController seasonSql = new SeasonSQLController();
-    HashMap teams = seasonSql.getTeamMap( SportTypes.TYPE_NFL_FOOTBALL );
-    if(teams != null) request.setAttribute("teamMap", teams);
+    SeasonSQLController seasonSql = null;
+    HashMap teams = null;
+    try {
+        seasonSql = new SeasonSQLController();
+        teams = seasonSql.getTeamMap( SportTypes.TYPE_NFL_FOOTBALL );
+    }
+    catch(Exception ex) {
+    }
+    finally {
+        if (seasonSql != null) seasonSql.closeConnection();
+    }
 %>
 			</td>
 		</tr>
@@ -23,7 +31,7 @@
 	<div style="margin-left:1em; margin-top:1em; border-top:1px solid #DDDDDD">
         <a href="<%=request.getContextPath()%>/servlet/goUser?r=switchView" style="font-size:7pt; padding-left:1em">view mobile version</a>
 	</div>
-	<div id="divLogin" class="msg">
+        <div id="divLogin" class="msg">
 		<form name="frmLogin" action="<%=request.getContextPath()%>/servlet/goUser?r=login" method="POST">
 			<table cellspacing="0" cellpadding="5" border="0">
 				<tr>

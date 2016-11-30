@@ -37,6 +37,7 @@
             <param-name>taskClass3</param-name>
             <param-value>com.ocsports.timer.SendReminderTask,60</param-value>
         </init-param>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <!-- SERVLET MAPPINGS -->
     <servlet-mapping>
