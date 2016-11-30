@@ -1,14 +1,11 @@
-/*
- * Title         DraftSQLController.java
- * Created       March, 2010
- * Author        Paul Charlton
- */
 package com.ocsports.sql;
 
+import com.ocsports.core.ProcessException;
 import com.ocsports.models.DraftChat;
 import com.ocsports.models.DraftPick;
 import com.ocsports.models.DraftPlayer;
 import com.ocsports.models.DraftTeamPos;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -18,12 +15,12 @@ public class DraftSQLController extends SQLBase {
         int pickKey = 0;
         String query = "SELECT MIN(pick_key) \"PICK_KEY\" FROM draft_order_tbl WHERE IFNULL(player_key, 0) = 0";
         try {
-            this.executeQuery(query, null);
+            executeQuery(query, null);
             if (rs != null && rs.next()) {
                 pickKey = rs.getInt("pick_key");
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
         return pickKey;
     }
@@ -32,12 +29,12 @@ public class DraftSQLController extends SQLBase {
         int chatKey = 0;
         String query = "SELECT MAX(chat_key) \"CHAT_KEY\" FROM draft_chat_tbl";
         try {
-            this.executeQuery(query, null);
+            executeQuery(query, null);
             if (rs != null && rs.next()) {
                 chatKey = rs.getInt("chat_key");
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
         return chatKey;
     }
@@ -45,12 +42,10 @@ public class DraftSQLController extends SQLBase {
     public void addChat(String msg, String teamName) {
         try {
             int chatKey = SQLBase.getNextKey(this, "draft_chat_tbl", "chat_key");
-
             String query = "INSERT INTO draft_chat_tbl(chat_key, chat_dt, chat_msg, team_name) VALUES(?,?,?,?)";
             Object[] args = new Object[]{new Integer(chatKey), new java.util.Date(), msg, teamName};
-            this.executeUpdate(query, args);
-        } catch (Exception e) {
-            //
+            executeUpdate(query, args);
+        } catch (ProcessException pe) {
         }
     }
 
@@ -58,22 +53,21 @@ public class DraftSQLController extends SQLBase {
         Collection chatMsgs = null;
         String query = "SELECT chat_key, chat_msg, team_name FROM draft_chat_tbl ORDER BY chat_dt DESC";
         try {
-            this.executeQuery(query.toString(), null);
+            executeQuery(query, null);
             if (rs != null) {
                 chatMsgs = new ArrayList();
                 while (rs.next()) {
                     chatMsgs.add(new DraftChat(rs));
                 }
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
         return chatMsgs;
     }
 
     public Collection getDraftPicks(int teamKey, int pickRound) {
         Collection draftPicks = null;
-
         StringBuffer query = new StringBuffer();
         query.append("SELECT IFNULL(plyr.player_key, 0) \"PLAYER_KEY\" ");
         query.append(" , plyr.rank");
@@ -98,30 +92,29 @@ public class DraftSQLController extends SQLBase {
         query.append(" LEFT JOIN draft_player_tbl plyr ON ord.player_key = plyr.player_key)");
         query.append(" WHERE ord.pick_key > 0");
         if (teamKey > 0) {
-            query.append(" AND ord.team_key = " + teamKey);
+            query.append(" AND ord.team_key = ").append(teamKey);
         }
         if (pickRound > 0) {
-            query.append(" AND ord.pick_round = " + pickRound);
+            query.append(" AND ord.pick_round = ").append(pickRound);
         }
         query.append(" ORDER BY 12");
 
         try {
-            this.executeQuery(query.toString(), null);
+            executeQuery(query.toString(), null);
             if (rs != null) {
                 draftPicks = new ArrayList();
                 while (rs.next()) {
                     draftPicks.add(new DraftPick(rs));
                 }
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
         return draftPicks;
     }
 
     public Collection getPlayers() {
         Collection players = null;
-
         StringBuffer query = new StringBuffer();
         query.append("SELECT plyr.player_key");
         query.append(" , plyr.rank");
@@ -138,15 +131,15 @@ public class DraftSQLController extends SQLBase {
         query.append(" ORDER BY 2");
 
         try {
-            this.executeQuery(query.toString(), null);
+            executeQuery(query.toString(), null);
             if (rs != null) {
                 players = new ArrayList();
                 while (rs.next()) {
                     players.add(new DraftPlayer(rs));
                 }
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
         return players;
     }
@@ -160,14 +153,14 @@ public class DraftSQLController extends SQLBase {
 
         ArrayList teams = new ArrayList();
         try {
-            this.executeQuery(query.toString(), null);
+            executeQuery(query.toString(), null);
             if (rs != null) {
                 while (rs.next()) {
                     teams.add(rs.getString("team_name"));
                 }
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
         return teams;
     }
@@ -198,14 +191,14 @@ public class DraftSQLController extends SQLBase {
         ArrayList players = new ArrayList();
         try {
             Object[] args = new Object[]{draftTeam};
-            this.executeQuery(query.toString(), args);
+            executeQuery(query.toString(), args);
             if (rs != null) {
                 while (rs.next()) {
                     players.add(new DraftPlayer(rs));
                 }
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
 
         Collection teamPlayers = new ArrayList();
@@ -220,14 +213,13 @@ public class DraftSQLController extends SQLBase {
                 dp = (DraftPlayer) players.get(k);
                 if (dp.pos.indexOf(currPos) > -1) {
                     break;
-                } else if (currPos == "UTIL" && dp.pos.indexOf("SP") == -1 && dp.pos.indexOf("RP") == -1) {
+                } else if (currPos.equals("UTIL") && dp.pos.indexOf("SP") == -1 && dp.pos.indexOf("RP") == -1) {
                     break;
-                } else if (currPos == "P" && (dp.pos.indexOf("SP") > -1 || dp.pos.indexOf("RP") > -1)) {
+                } else if (currPos.equals("P") && (dp.pos.indexOf("SP") > -1 || dp.pos.indexOf("RP") > -1)) {
                     break;
-                } else if (currPos == "BN") {
+                } else if (currPos.equals("BN")) {
                     break;
                 }
-
                 dp = null;
             }
             if (dp != null) {
@@ -271,16 +263,15 @@ public class DraftSQLController extends SQLBase {
         query.append(" WHERE plyr.rank > 0");
 
         if (pos != null && pos.length() > 0 && !pos.equals("ALL")) {
-            query.append(" AND INSTR(plyr.pos, '" + pos + "') > 0");
+            query.append(" AND INSTR(plyr.pos, '").append(pos).append("') > 0");
         }
-
         if (teamAbrv != null && teamAbrv.length() > 0 && !teamAbrv.equals("ALL")) {
-            query.append(" AND UPPER(plyr.team_abrv) = '" + teamAbrv.toUpperCase() + "'");
+            query.append(" AND UPPER(plyr.team_abrv) = '").append(teamAbrv.toUpperCase()).append("'");
         }
 
         if (playerName != null && playerName.length() > 0) {
             String pUpper = playerName.toUpperCase();
-            query.append(" AND ( INSTR(UPPER(plyr.fname), '" + pUpper + "') > 0 OR INSTR(UPPER(plyr.lname), '" + pUpper + "') > 0)");
+            query.append(" AND ( INSTR(UPPER(plyr.fname), '").append(pUpper).append("') > 0 OR INSTR(UPPER(plyr.lname), '").append(pUpper).append("') > 0)");
         }
 
         if (hideSelected != null && hideSelected.length() > 0) {
@@ -295,51 +286,26 @@ public class DraftSQLController extends SQLBase {
 
         ArrayList players = new ArrayList();
         try {
-            this.executeQuery(query.toString(), null);
+            executeQuery(query.toString(), null);
             if (rs != null) {
                 while (rs.next()) {
                     players.add(new DraftPlayer(rs));
                 }
             }
-        } catch (Exception e) {
-            //
+        } catch (SQLException sqle) {
+        } catch (ProcessException pe) {
         }
         return players;
     }
 
-    /*
-     public Collection getPicks() throws ProcessException {
-     String query = "SELECT do.pick_id, do.pick_round, do.pick_team, IFNULL(do.player_key, 0) \"player_key\" " +
-     " , IFNULL(dp.player_rank, 0) \"player_rank\", dp.player_fname, dp.player_lname, dp.player_pos" +
-     " , dp.team_name, dp.team_abrv, dp.player_statcats, dp.player_stats, dp.player_img, dp.player_num" +
-     " FROM draft_order_tbl do" +
-     " LEFT JOIN draft_player_tbl dp ON do.player_key = dp.player_key" +
-     " ORDER BY 1";
-
-     ArrayList picks = new ArrayList();
-     try {
-     this.executeQuery( query, null );
-     if( rs != null ) {
-     while( rs.next() ) {
-     picks.add( new DraftPick(rs) );
-     }
-     }
-     }
-     catch(java.sql.SQLException sqle) {
-     throw new ProcessException(sqle);
-     }
-     return picks;
-     }
-     */
     public void draftPlayer(int pickId, int playerId) {
         String query = "UPDATE draft_order_tbl "
                 + " SET player_key = ?"
                 + " WHERE pick_key = ?";
         Object[] args = new Object[]{new Integer(playerId), new Integer(pickId)};
         try {
-            this.executeUpdate(query, args);
-        } catch (Exception e) {
-            //
+            executeUpdate(query, args);
+        } catch (ProcessException e) {
         }
     }
 }

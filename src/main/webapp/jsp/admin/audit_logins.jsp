@@ -16,7 +16,7 @@
 
     SimpleDateFormat fmt = new SimpleDateFormat();
 
-    String viewURL = response.encodeURL( AdminServlet.ALIAS + "?r=auditLogin" );
+    String viewURL = response.encodeURL("goAdmin?r=auditLogin");
 %>
 
 <table width='100%' cellspacing='0' cellpadding='5' border='0' class='raised'>

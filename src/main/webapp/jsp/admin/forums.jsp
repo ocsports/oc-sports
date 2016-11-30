@@ -10,8 +10,8 @@
     SimpleDateFormat fmt = new SimpleDateFormat();
     Iterator iter = null;
     
-    String forumsURL = response.encodeURL( AdminServlet.ALIAS + "?r=forums" );
-    String saveMsgURL = response.encodeURL( AdminServlet.ALIAS + "?r=saveForumMsg" );
+    String forumsURL = response.encodeURL("goAdmin?r=forums");
+    String saveMsgURL = response.encodeURL("goAdmin?r=saveForumMsg");
 %>
 
 <h2>Forum Messages (showing last <%=messages.size()%> posts)</h2>

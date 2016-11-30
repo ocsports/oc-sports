@@ -11,8 +11,8 @@
     Iterator iter = null;
     int counter = 0;
     
-    String saveNoticeURL = response.encodeURL( AdminServlet.ALIAS + "?r=saveSystemNotice" );
-    String deleteNoticeURL = response.encodeURL( AdminServlet.ALIAS + "?r=deleteSystemNotice" );
+    String saveNoticeURL = response.encodeURL("goAdmin?r=saveSystemNotice");
+    String deleteNoticeURL = response.encodeURL("goAdmin?r=deleteSystemNotice");
 %>
 
 <h2>System Notices <a href="" title="Create New Notice" style="padding-left: 0.5em; font-size: 10pt; font-weight: bold" onclick="return createSysNotice()">Create New Notice</a></h2>
