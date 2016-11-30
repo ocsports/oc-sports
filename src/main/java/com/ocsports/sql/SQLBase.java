@@ -1,9 +1,3 @@
-/*
- * Title         SQLBase.java
- * Created       April 1, 2004
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.sql;
- */
 package com.ocsports.sql;
 
 import com.ocsports.core.ProcessException;
@@ -61,7 +55,7 @@ public abstract class SQLBase {
             }
             // always reset the statement and results when calling openConnection;
             resetStatement();
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
     }
@@ -146,7 +140,7 @@ public abstract class SQLBase {
                 //already updated val + 1 in query 1;
                 nextKey = rs.getInt(1);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         } finally {
             try {

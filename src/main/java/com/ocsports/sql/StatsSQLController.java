@@ -1,9 +1,3 @@
-/*
- * Title         StatsSQLController.java
- * Created       April 11, 2004
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.sql;
- */
 package com.ocsports.sql;
 
 import com.ocsports.core.ProcessException;
@@ -11,16 +5,25 @@ import com.ocsports.core.SportTypes;
 import com.ocsports.models.TeamModel;
 import com.ocsports.models.TeamStatsModel;
 import com.ocsports.views.PickStatsView;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Iterator;
 
 public class StatsSQLController extends SQLBase {
 
     public TeamStatsModel[] getTeamStats(int seasonId) throws ProcessException {
-        SeasonSQLController seasonSQL = new SeasonSQLController();
-        Collection teams = seasonSQL.getTeamList(SportTypes.TYPE_NFL_FOOTBALL, SeasonSQLController.TEAMS_ORDER_BY_CITY);
-        seasonSQL.closeConnection();
-        seasonSQL = null;
+        SeasonSQLController seasonSql = null;
+        Collection teams = null;
+        try {
+            seasonSql = new SeasonSQLController();
+            teams = seasonSql.getTeamList(SportTypes.TYPE_NFL_FOOTBALL, SeasonSQLController.TEAMS_ORDER_BY_CITY);
+        } catch (ProcessException pe) {
+            throw pe;
+        } finally {
+            if (seasonSql != null) {
+                seasonSql.closeConnection();
+            }
+        }
 
         TeamStatsModel[] teamStats = new TeamStatsModel[teams.size()];
         Iterator iter = teams.iterator();
@@ -60,41 +63,31 @@ public class StatsSQLController extends SQLBase {
                     for (int i = 0; i < teamStats.length; i++) {
                         if (teamStats[i].getTeamId() == homeTeamId) {
                             tsmHome = teamStats[i];
+                            tsmHome.addGame(rs.getInt("home_score_in"),
+                                    rs.getInt("away_score_in"),
+                                    rs.getFloat("game_spread_fl"),
+                                    true,
+                                    isDome,
+                                    isTurf);
                         }
                         if (teamStats[i].getTeamId() == awayTeamId) {
                             tsmAway = teamStats[i];
+                            tsmAway.addGame(rs.getInt("away_score_in"),
+                                    rs.getInt("home_score_in"),
+                                    (rs.getFloat("game_spread_fl") * -1),
+                                    false,
+                                    isDome,
+                                    isTurf);
                         }
                         if (tsmHome != null && tsmAway != null) {
                             break;
                         }
                     }
-
-                    tsmHome.addGame(rs.getInt("home_score_in"),
-                            rs.getInt("away_score_in"),
-                            rs.getFloat("game_spread_fl"),
-                            true,
-                            isDome,
-                            isTurf);
-
-                    tsmAway.addGame(rs.getInt("away_score_in"),
-                            rs.getInt("home_score_in"),
-                            (rs.getFloat("game_spread_fl") * -1),
-                            false,
-                            isDome,
-                            isTurf);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception e) {
-                }
-            }
         }
-
         return teamStats;
     }
 
@@ -133,7 +126,7 @@ public class StatsSQLController extends SQLBase {
                 + " AND gm.series_no_in = ss.series_no_in"
                 + " AND ss.season_no_in = ?";
 
-        Object[] args = null;
+        Object[] args;
         if (seriesId > 0) {
             query += " AND gm.series_no_in = ?";
             args = new Object[]{new Integer(seasonId), new Integer(seriesId)};
@@ -169,17 +162,9 @@ public class StatsSQLController extends SQLBase {
                     teamStats[(spread > 0 ? 10 : 11)].addGame(awayScore, homeScore, (spread * -1), false, homeDome, homeTurf);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception e) {
-                }
-            }
         }
-
         return teamStats;
     }
 
@@ -194,13 +179,13 @@ public class StatsSQLController extends SQLBase {
                 + " AND ss.series_no_in = gm.series_no_in"
                 + " AND tm.team_no_in = ugx.team_no_in"
                 + " AND ss.season_no_in = ?"
-                + " AND gm.game_posted_si = 1"
+                + " AND game_start_dt < ?"
                 + " GROUP BY ugx.team_no_in, ss.series_no_in, ss.season_seq_no"
                 + " ORDER BY 2, 3";
 
         PickStatsView pickStats = null;
         try {
-            this.executeQuery(query, new Object[]{new Integer(seasonId)});
+            this.executeQuery(query, new Object[]{new Integer(seasonId), new java.util.Date()});
             if (rs != null) {
                 pickStats = new PickStatsView();
                 while (rs.next()) {
@@ -209,76 +194,12 @@ public class StatsSQLController extends SQLBase {
                     int seriesId = rs.getInt("ss.series_no_in");
 //					int seqNo = rs.getInt( "ss.season_seq_no" );
                     int pickCount = rs.getInt("pick_count");
-
                     pickStats.addPicks(teamId, seriesId, pickCount, teamName);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (Exception e) {
-                }
-            }
         }
-
         return pickStats;
     }
-    /*
-     public PickStatsView[] getPicksStats(int seasonId, int orderBy) throws ProcessException {
-     SeasonSQLController seasonSQL = new SeasonSQLController();
-     Collection teams = seasonSQL.getTeamList(SportTypes.TYPE_NFL_FOOTBALL, SeasonSQLController.TEAMS_ORDER_BY_CITY);
-     int seriesCount = seasonSQL.getSeriesBySeason(seasonId).size();
-     seasonSQL.closeConnection();
-     seasonSQL = null;
-
-     PickStatsView[] pickStats = new PickStatsView[teams.size()];
-     Iterator iter = teams.iterator();
-     int counter = 0;
-     while(iter.hasNext()) {
-     TeamModel tm = (TeamModel)iter.next();
-     pickStats[counter++] = new PickStatsView(tm.getId(), tm.getCity() + " " + tm.getName(), seriesCount);
-     }
-
-     String query = "SELECT ug.team_no_in" +
-     ", gm.series_no_in" +
-     " FROM user_game_xref_tbl ug" +
-     ", game_tbl gm" +
-     ", season_series_tbl ss" +
-     " WHERE ug.game_no_in = gm.game_no_in" +
-     " AND gm.series_no_in = ss.series_no_in" +
-     " AND ss.season_no_in = ?" +
-     " AND gm.game_posted_si = 1" +
-     " ORDER BY gm.series_no_in DESC";
-
-     try {
-     this.executeQuery( query, new Object[] {new Integer(seasonId)} );
-     if(rs != null) {
-     while(rs.next()) {
-     int teamId = rs.getInt("ug.team_no_in");
-     int seriesId = rs.getInt("gm.series_no_in");
-     int seriesSeq = seriesId % seriesCount;
-     if(seriesSeq == 0) seriesSeq = seriesCount;
-
-     for(int i=0; i < pickStats.length; i++) {
-     if(pickStats[i].getTeamId() == teamId) {
-     pickStats[i].addPick(seriesSeq);
-     break;
-     }
-     }
-     }
-     }
-     }
-     catch(java.sql.SQLException sqle) {
-     throw new ProcessException(sqle);
-     }
-     finally {
-     if(rs != null) try{ rs.close(); } catch(Exception e){}
-     }
-
-     return pickStats;
-     }
-     */
 }

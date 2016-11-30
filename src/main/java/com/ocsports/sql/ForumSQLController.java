@@ -1,16 +1,8 @@
-/*
- * Title         ForumSQLController.java
- * Created       April 1, 2004
- * Author        Paul Charlton
- * Modified      6/23/2006 - PC - Removed Tpoics from Forums Page;
- *               now we will just use the leagueID as the topic ID
- *               for all messages created within that league
- *               7/30/2009 - moved to package com.ocsports.sql;
- */
 package com.ocsports.sql;
 
 import com.ocsports.core.ProcessException;
 import com.ocsports.models.ForumMessageModel;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -24,13 +16,13 @@ public class ForumSQLController extends SQLBase {
                 + " ORDER BY fm.msg_created_dt DESC";
         ArrayList msgs = new ArrayList();
         try {
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null) {
                 while (rs.next()) {
-                    msgs.add(this.loadForumMessageModel(rs));
+                    msgs.add(loadForumMessageModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return msgs;
@@ -43,22 +35,18 @@ public class ForumSQLController extends SQLBase {
                 + ", msg_created_dt"
                 + ", msg_created_by_in"
                 + ") VALUES(?,?,?,?,?)";
-
         int msgId = SQLBase.getNextKey(this, "forum_message_tbl", "forum_msg_no_in");
-
         if (msgId <= 0) {
             throw new ProcessException("Unable to retrieve next key for forum_message_tbl - forum_msg_no_in");
         }
-
-        Object[] args = new Object[5];
-        args[0] = new Integer(msgId);
-        args[1] = new Integer(leagueId);
-        args[2] = msg;
-        args[3] = new java.util.Date();
-        args[4] = new Integer(userId);
-
-        this.executeUpdate(query, args);
-
+        Object[] args = new Object[]{
+            new Integer(msgId),
+            new Integer(leagueId),
+            msg,
+            new java.util.Date(),
+            new Integer(userId)
+        };
+        executeUpdate(query, args);
         return msgId;
     }
 
@@ -71,13 +59,13 @@ public class ForumSQLController extends SQLBase {
         ArrayList msgs = new ArrayList();
         try {
             int counter = 0;
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null) {
                 while (rs.next() && (lastXMessages <= 0 || counter++ < lastXMessages)) {
-                    msgs.add(this.loadForumMessageModel(rs));
+                    msgs.add(loadForumMessageModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return msgs;
@@ -86,11 +74,10 @@ public class ForumSQLController extends SQLBase {
     public void updateMessage(int msgId, String msgText) throws ProcessException {
         String query = "UPDATE forum_message_tbl SET msg_text_vc = ?"
                 + " WHERE forum_msg_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{msgText, new Integer(msgId)});
+        executeUpdate(query, new Object[]{msgText, new Integer(msgId)});
     }
 
-    public static ForumMessageModel loadForumMessageModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static ForumMessageModel loadForumMessageModel(java.sql.ResultSet rs) throws SQLException {
         ForumMessageModel fm = new ForumMessageModel();
         fm.setId(rs.getInt("forum_msg_no_in"));
         fm.setLeagueId(rs.getInt("league_no_in"));

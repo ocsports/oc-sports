@@ -1,9 +1,3 @@
-/*
- * Title         UserSQLController.java
- * Created       April 11, 2004
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.sql;
- */
 package com.ocsports.sql;
 
 import com.ocsports.core.ProcessException;
@@ -15,6 +9,7 @@ import com.ocsports.models.SeasonModel;
 import com.ocsports.models.SystemNoticeModel;
 import com.ocsports.models.UserModel;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -36,36 +31,29 @@ public class UserSQLController extends SQLBase {
                 + " AND s.season_active_si = 1"
                 + " AND LOWER(u.user_login_id_vc) = ?"
                 + " AND LOWER(u.user_login_pwd_vc) = ?";
-
         int userId = -1;
-
         try {
-            this.executeQuery(query, new Object[]{loginId.toLowerCase(), loginPwd.toLowerCase()});
+            executeQuery(query, new Object[]{loginId.toLowerCase(), loginPwd.toLowerCase()});
             if (rs != null && rs.next()) {
                 userId = rs.getInt(1);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return userId;
     }
 
     public UserModel getUserModel(int userId) throws ProcessException {
         String query = "SELECT * FROM user_tbl WHERE user_no_in = ?";
-
         UserModel u = null;
-
         try {
-            this.executeQuery(query, new Object[]{new Integer(userId)});
-
+            executeQuery(query, new Object[]{new Integer(userId)});
             if (rs != null && rs.next()) {
                 u = loadUserModel(rs);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return u;
     }
 
@@ -75,7 +63,6 @@ public class UserSQLController extends SQLBase {
         SeasonSQLController seasonCtrlr = null;
         try {
             seasonCtrlr = new SeasonSQLController();
-
             Collection seasons = seasonCtrlr.getSeasons(SportTypes.TYPE_NFL_FOOTBALL, false);
             Iterator iter = seasons.iterator();
             while (iter.hasNext()) {
@@ -92,8 +79,6 @@ public class UserSQLController extends SQLBase {
                 leagueId = ((LeagueModel) iter.next()).getId();
                 break;
             }
-
-            return leagueId;
         } catch (Exception e) {
             throw new ProcessException(e);
         } finally {
@@ -101,6 +86,7 @@ public class UserSQLController extends SQLBase {
                 seasonCtrlr.closeConnection();
             }
         }
+        return leagueId;
     }
 
     public Collection findUsersByEmail(String email) throws ProcessException {
@@ -115,34 +101,18 @@ public class UserSQLController extends SQLBase {
 
         ArrayList userModels = null;
         try {
-            this.executeQuery(query, new Object[]{email.toLowerCase(), email.toLowerCase()});
-
+            executeQuery(query, new Object[]{email.toLowerCase(), email.toLowerCase()});
             if (rs != null) {
                 userModels = new ArrayList();
                 while (rs.next()) {
                     userModels.add(loadUserModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return userModels;
     }
-    /*
-     public void updateUserAdmin(UserModel um) throws ProcessException {
-     String query = "UPDATE user_tbl SET user_email_picks_si = ?" +
-     ", user_send_warning_si = ?" +
-     ", user_paid_si = ?" +
-     " WHERE user_no_in = ?";
-
-     Object[] args = new Object[] { new Boolean(um.emailPicks()),
-     new Boolean(um.sendWarning()),
-     new Boolean(um.isPaid()),
-     new Integer(um.getUserId()) };
-
-     this.executeUpdate(query, args);
-     }
-     */
 
     public void updateProfile(UserModel uModel) throws ProcessException {
         String query = "UPDATE user_tbl SET user_fname_vc = ?"
@@ -172,20 +142,19 @@ public class UserSQLController extends SQLBase {
             uModel.getEmail(),
             uModel.getEmail2(),
             new Integer(uModel.getDefaultPick()),
-            new Boolean(uModel.emailPicks()),
-            new Boolean(uModel.sendWarning()),
+            Boolean.valueOf(uModel.emailPicks()),
+            Boolean.valueOf(uModel.sendWarning()),
             new Integer(uModel.getFavoriteTeam()),
             uModel.getFavoriteTeamName(),
             uModel.getColorTheme(),
             new Integer((uModel.isLoginDisabled() ? 1 : 0)),
             new Integer((uModel.isPaid() ? 1 : 0)),
             new Integer(uModel.getUserId())};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public int createProfile(UserModel uModel) throws ProcessException {
         int newUserId = SQLBase.getNextKey(this, "user_tbl", "user_no_in");
-
         if (newUserId <= 0) {
             throw new ProcessException("Unable to retrieve next key for user_tbl - user_no_in");
         }
@@ -219,25 +188,17 @@ public class UserSQLController extends SQLBase {
             uModel.getEmail(),
             uModel.getEmail2(),
             new Integer(uModel.getDefaultPick()),
-            new Boolean(uModel.emailPicks()),
-            new Boolean(uModel.sendWarning()),
-            new Boolean(false),
+            Boolean.valueOf(uModel.emailPicks()),
+            Boolean.valueOf(uModel.sendWarning()),
+            Boolean.valueOf(false),
             new Integer(uModel.getFavoriteTeam()),
             uModel.getFavoriteTeamName(),
             uModel.getColorTheme(),
-            new Boolean(uModel.isLoginDisabled())};
-
-        this.executeUpdate(query, args);
-
+            Boolean.valueOf(uModel.isLoginDisabled())};
+        executeUpdate(query, args);
         return newUserId;
     }
 
-    /*
-     public void disableLogin(int userId, boolean disabled) throws ProcessException {
-     String query = "UPDATE user_tbl SET user_login_disabled_si = ? WHERE user_no_in = ?";
-     this.executeUpdate( query, new Object[] { new Boolean(disabled), new Integer(userId) } );
-     }
-     */
     public boolean loginExists(int userId, String loginId) throws ProcessException {
         String query = "SELECT u.user_no_in FROM user_tbl u"
                 + ", league_tbl l"
@@ -247,28 +208,24 @@ public class UserSQLController extends SQLBase {
                 + " AND s.season_active_si = 1"
                 + " AND LOWER(u.user_login_id_vc) = ? and u.user_no_in != ?";
         try {
-            this.executeQuery(query, new Object[]{loginId.toLowerCase(), new Integer(userId)});
-
+            executeQuery(query, new Object[]{loginId.toLowerCase(), new Integer(userId)});
             return (rs != null && rs.next());
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
     }
 
     public Collection getLeaguesBySeason(int seasonId) throws ProcessException {
         String query = "SELECT * FROM league_tbl WHERE season_no_in = ? ORDER BY league_name_vc";
-
         ArrayList leagues = new ArrayList();
-
         try {
-            this.executeQuery(query, new Object[]{new Integer(seasonId)});
-
+            executeQuery(query, new Object[]{new Integer(seasonId)});
             if (rs != null) {
                 while (rs.next()) {
                     leagues.add(loadLeagueModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return leagues;
@@ -276,17 +233,15 @@ public class UserSQLController extends SQLBase {
 
     public Collection getLeagues() throws ProcessException {
         String query = "SELECT * FROM league_tbl ORDER BY league_name_vc";
-
         ArrayList leagues = new ArrayList();
-
         try {
-            this.executeQuery(query, null);
+            executeQuery(query, null);
             if (rs != null) {
                 while (rs.next()) {
                     leagues.add(loadLeagueModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return leagues;
@@ -294,31 +249,25 @@ public class UserSQLController extends SQLBase {
 
     public void setLeague(int userId, int leagueId) throws ProcessException {
         String query = "UPDATE user_tbl set league_no_in = ? WHERE user_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{new Integer(leagueId), new Integer(userId)});
+        executeUpdate(query, new Object[]{new Integer(leagueId), new Integer(userId)});
     }
 
     public LeagueModel getLeagueModel(int leagueId) throws ProcessException {
         String query = "SELECT * FROM league_tbl WHERE league_no_in = ?";
-
         LeagueModel lm = null;
-
         try {
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
-
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null && rs.next()) {
                 lm = loadLeagueModel(rs);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return lm;
     }
 
     public Collection getUsersByLeague(int leagueId, int orderBy) throws ProcessException {
         String query = "SELECT * FROM user_tbl WHERE league_no_in = ?";
-
         switch (orderBy) {
             case UserSQLController.USERS_ORDER_BY_NAME:
                 query += " ORDER BY user_fname_vc, user_lname_vc";
@@ -341,16 +290,14 @@ public class UserSQLController extends SQLBase {
         }
 
         ArrayList users = new ArrayList();
-
         try {
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
-
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null) {
                 while (rs.next()) {
                     users.add(loadUserModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return users;
@@ -358,26 +305,24 @@ public class UserSQLController extends SQLBase {
 
     public void deleteUser(int userId) throws ProcessException {
         Object[] args = new Object[]{new Integer(userId)};
-        this.executeUpdate("DELETE FROM user_game_xref_tbl WHERE user_no_in = ?", args);
-        this.executeUpdate("DELETE FROM user_series_xref_tbl WHERE user_no_in = ?", args);
-        this.executeUpdate("DELETE FROM forum_message_tbl WHERE msg_created_by_in = ?", args);
-        //this.executeUpdate("DELETE FROM forum_topic_tbl WHERE topic_created_by_in= ?", args);
-        this.executeUpdate("DELETE FROM audit_login_tbl WHERE user_no_in = ?", args);
-        this.executeUpdate("DELETE FROM audit_picks_tbl WHERE user_no_in = ?", args);
-        this.executeUpdate("DELETE FROM user_tbl WHERE user_no_in = ?", args);
+        executeUpdate("DELETE FROM user_game_xref_tbl WHERE user_no_in = ?", args);
+        executeUpdate("DELETE FROM user_series_xref_tbl WHERE user_no_in = ?", args);
+        executeUpdate("DELETE FROM forum_message_tbl WHERE msg_created_by_in = ?", args);
+        executeUpdate("DELETE FROM audit_login_tbl WHERE user_no_in = ?", args);
+        executeUpdate("DELETE FROM audit_picks_tbl WHERE user_no_in = ?", args);
+        executeUpdate("DELETE FROM user_tbl WHERE user_no_in = ?", args);
     }
 
     public int getSurvivorCount(int leagueId) throws ProcessException {
+        int userCount = -1;
         try {
-            int userCount = -1;
             String userIds = "";
-
             String query = "SELECT DISTINCT u.user_no_in "
                     + " FROM user_tbl u, user_series_xref_tbl usx "
                     + " WHERE u.user_no_in = usx.user_no_in "
                     + " AND u.league_no_in = ? "
                     + " AND usx.survivor_status_si = ?";
-            this.executeQuery(query, new Object[]{new Integer(leagueId), new Integer(Status.SURVIVOR_STATUS_LOST)});
+            executeQuery(query, new Object[]{new Integer(leagueId), new Integer(Status.SURVIVOR_STATUS_LOST)});
             if (rs != null) {
                 while (rs.next()) {
                     if (userIds.length() > 0) {
@@ -392,18 +337,18 @@ public class UserSQLController extends SQLBase {
                 query += " AND user_no_in NOT IN (" + userIds + ")";
             }
 
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null && rs.next()) {
                 userCount = rs.getInt(1);
             }
-
-            return userCount;
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return userCount;
     }
 
     public Collection getSystemNotices(int lastXMessages, boolean publishedOnly) throws ProcessException {
+        ArrayList notices = new ArrayList();
         try {
             String query = "SELECT * FROM system_notice_tbl"
                     + " WHERE notice_updated_dt IS NOT NULL"
@@ -411,9 +356,8 @@ public class UserSQLController extends SQLBase {
                     + " ORDER BY notice_publish_si DESC"
                     + " , notice_updated_dt DESC";
 
-            this.executeQuery(query, null);
+            executeQuery(query, null);
 
-            ArrayList notices = new ArrayList();
             int count = 0;
             if (rs != null) {
                 while (rs.next() && (lastXMessages <= 0 || count < lastXMessages)) {
@@ -421,15 +365,14 @@ public class UserSQLController extends SQLBase {
                     count++;
                 }
             }
-            return notices;
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return notices;
     }
 
     public void createSystemNotice(String msg, boolean publish) throws ProcessException {
         int noticeId = SQLBase.getNextKey(this, "system_notice_tbl", "notice_no_in");
-
         String query = "INSERT INTO system_notice_tbl( notice_no_in"
                 + " , notice_created_dt"
                 + " , notice_updated_dt"
@@ -443,8 +386,7 @@ public class UserSQLController extends SQLBase {
             msg,
             new Integer(publish ? 1 : 0)
         };
-
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateSystemNotice(int noticeId, String msgText, boolean publish) throws ProcessException {
@@ -452,31 +394,16 @@ public class UserSQLController extends SQLBase {
                 + " , notice_publish_si = ?"
                 + " , notice_updated_dt = ?"
                 + " WHERE notice_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{msgText, Boolean.valueOf(publish), new java.util.Date(), new Integer(noticeId)});
+        executeUpdate(query, new Object[]{msgText, Boolean.valueOf(publish), new java.util.Date(), new Integer(noticeId)});
     }
 
     public void deleteSystemNotice(int noticeId) throws ProcessException {
         String query = "DELETE FROM system_notice_tbl WHERE notice_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{new Integer(noticeId)});
+        executeUpdate(query, new Object[]{new Integer(noticeId)});
     }
 
-//    public void publishSystemNotice(int noticeId, boolean publish) throws ProcessException {
-//        String query = "UPDATE system_notice_tbl" +
-//                       " SET notice_publish_si = ?" +
-//					   " , notice_updated_dt = ?" +
-//                       " WHERE notice_no_in = ?";
-//
-//        int publishKey = (publish ? 1 : 0);
-//        Object[] args = new Object[] {new Integer(publishKey), new java.util.Date(), new Integer(noticeId)};
-//        this.executeUpdate(query, args);
-//    }
-//
     public Collection getAuditLoginModels(int userId, java.util.Date sinceDt, int lastXLogins) throws ProcessException {
-
         Object[] args = null;
-
         String query = "SELECT * FROM audit_login_tbl";
         if (userId > 0 && sinceDt != null) {
             query += " WHERE user_no_in = ? AND login_timestamp_dt >= ?";
@@ -491,18 +418,16 @@ public class UserSQLController extends SQLBase {
         query += " ORDER BY login_timestamp_dt DESC";
 
         ArrayList logins = new ArrayList();
-
         try {
-            this.executeQuery(query, args);
-
             int count = 0;
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next() && (lastXLogins <= 0 || count < lastXLogins || sinceDt != null)) {
                     logins.add(loadAuditLoginModel(rs));
                     count++;
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return logins;
@@ -514,20 +439,17 @@ public class UserSQLController extends SQLBase {
                 + ", login_pwd_vc"
                 + ", user_no_in"
                 + ") VALUES(?,?,?,?)";
-
         Object[] args = new Object[]{new java.util.Date(), loginId, pwd, new Integer(userId)};
-
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void setUserPaid(int userId, boolean isPaid) throws ProcessException {
         String query = "UPDATE user_tbl set user_paid_si = ? where user_no_in = ?";
-
-        Object[] args = new Object[]{new Boolean(isPaid), new Integer(userId)};
-        this.executeUpdate(query, args);
+        Object[] args = new Object[]{Boolean.valueOf(isPaid), new Integer(userId)};
+        executeUpdate(query, args);
     }
 
-    public static LeagueModel loadLeagueModel(ResultSet rs) throws java.sql.SQLException {
+    public static LeagueModel loadLeagueModel(ResultSet rs) throws SQLException {
         LeagueModel lm = new LeagueModel();
         lm.setId(rs.getInt("league_no_in"));
         lm.setName(rs.getString("league_name_vc"));
@@ -538,7 +460,7 @@ public class UserSQLController extends SQLBase {
         return lm;
     }
 
-    public static UserModel loadUserModel(ResultSet rs) throws java.sql.SQLException {
+    public static UserModel loadUserModel(ResultSet rs) throws SQLException {
         UserModel um = new UserModel();
         um.setUserId(rs.getInt("user_no_in"));
         um.setFirstName(rs.getString("user_fname_vc"));
@@ -560,7 +482,7 @@ public class UserSQLController extends SQLBase {
         return um;
     }
 
-    public static SystemNoticeModel loadSystemNoticeModel(ResultSet rs) throws java.sql.SQLException {
+    public static SystemNoticeModel loadSystemNoticeModel(ResultSet rs) throws SQLException {
         SystemNoticeModel sm = new SystemNoticeModel();
         sm.setId(rs.getInt("notice_no_in"));
         sm.setCreatedDate(rs.getTimestamp("notice_created_dt").getTime());
@@ -570,7 +492,7 @@ public class UserSQLController extends SQLBase {
         return sm;
     }
 
-    public static AuditLoginModel loadAuditLoginModel(ResultSet rs) throws java.sql.SQLException {
+    public static AuditLoginModel loadAuditLoginModel(ResultSet rs) throws SQLException {
         AuditLoginModel alm = new AuditLoginModel();
         alm.setTimestamp(rs.getTimestamp("login_timestamp_dt"));
         alm.setLoginId(rs.getString("login_id_vc"));
