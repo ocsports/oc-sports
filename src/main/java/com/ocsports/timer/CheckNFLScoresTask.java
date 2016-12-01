@@ -33,12 +33,10 @@ public class CheckNFLScoresTask extends TimerTask {
             poolSql = new PoolSQLController();
 
             Collection gamesInProgress = seasonSql.findGamesInProgress(SportTypes.TYPE_NFL_FOOTBALL);
-            if (gamesInProgress == null || gamesInProgress.size() <= 0) {
-                return;
+            if (gamesInProgress != null && !gamesInProgress.isEmpty()) {
+                addTaskMessage(gamesInProgress.size() + " games in progress");
+                postScores(gamesInProgress);
             }
-
-            addTaskMessage(gamesInProgress.size() + " games in progress");
-            postScores(gamesInProgress);
             timerTaskCompleted();
         } catch (ProcessException pe) {
             timerTaskFailed(pe);

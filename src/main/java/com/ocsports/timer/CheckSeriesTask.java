@@ -29,7 +29,6 @@ public class CheckSeriesTask extends TimerTask {
         try {
             seasonSql = new SeasonSQLController();
             poolSql = new PoolSQLController();
-
             this.getCurrentSeries();
             timerTaskCompleted();
         } catch (ProcessException pe) {

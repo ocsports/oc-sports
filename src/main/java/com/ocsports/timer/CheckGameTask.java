@@ -29,19 +29,18 @@ public class CheckGameTask extends TimerTask {
             poolSql = new PoolSQLController();
 
             Collection gamesStarted = seasonSql.findGamesToSetDefaultPicks();
-            if (gamesStarted == null || gamesStarted.isEmpty()) {
-                return;
-            }
-            addTaskMessage(gamesStarted.size() + " games have started");
+            if (gamesStarted != null && !gamesStarted.isEmpty()) {
+                addTaskMessage(gamesStarted.size() + " games have started");
 
-            Iterator iter = gamesStarted.iterator();
-            while (iter.hasNext()) {
-                GameModel gm = (GameModel) iter.next();
-                //set default pick for users who haven't chosen a team yet
-                poolSql.setGameDefaultPicks(gm);
-                //update game record so we do NOT pick up on next run
-                seasonSql.setGameDefaultStatus(gm.getId(), 1);
-                addTaskMessage("Default picks set for game " + gm.getId());
+                Iterator iter = gamesStarted.iterator();
+                while (iter.hasNext()) {
+                    GameModel gm = (GameModel) iter.next();
+                    //set default pick for users who haven't chosen a team yet
+                    poolSql.setGameDefaultPicks(gm);
+                    //update game record so we do NOT pick up on next run
+                    seasonSql.setGameDefaultStatus(gm.getId(), 1);
+                    addTaskMessage("Default picks set for game " + gm.getId());
+                }
             }
             timerTaskCompleted();
         } catch (ProcessException pe) {

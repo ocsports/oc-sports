@@ -35,7 +35,6 @@ public class SendReminderTask extends TimerTask {
             seasonSql = new SeasonSQLController();
             poolSql = new PoolSQLController();
             userSql = new UserSQLController();
-
             this.getCurrentSeries();
             timerTaskCompleted();
         } catch (ProcessException pe) {
