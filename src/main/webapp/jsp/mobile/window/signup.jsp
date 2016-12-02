@@ -10,8 +10,8 @@
     UserModel um = (UserModel)request.getAttribute("UserModel");
     if(um == null) um = new UserModel();
     
-    SeasonSQLController seasonSql = null;
     HashMap teams = null;
+    SeasonSQLController seasonSql = null;
     try {
         seasonSql = new SeasonSQLController();
         teams = seasonSql.getTeamMap( SportTypes.TYPE_NFL_FOOTBALL );

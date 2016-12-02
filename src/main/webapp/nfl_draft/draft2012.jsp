@@ -27,13 +27,26 @@
     int currTeam = 0;
     String currTeamName = "";
     Date lastUpdate = new java.util.Date();
+    Collection allPlayers = null;
+    Collection picks = null;
+    Collection chat = null;
+    Collection teams = null;
+    int lastChat = -1;
 
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
-    Collection allPlayers = draftSqlCtrlr.getPlayers(1);
-    Collection picks = draftSqlCtrlr.getDraftPicks(0, 0);
-    Collection chat = draftSqlCtrlr.getChat();
-    Collection teams = draftSqlCtrlr.getTeams();
-    int lastChat = draftSqlCtrlr.getLastChat();
+    DraftSQLController draftSqlCtrlr = null;
+    try {
+        draftSqlCtrlr = new DraftSQLController();
+        allPlayers = draftSqlCtrlr.getPlayers(1);
+        picks = draftSqlCtrlr.getDraftPicks(0, 0);
+        chat = draftSqlCtrlr.getChat();
+        teams = draftSqlCtrlr.getTeams();
+        lastChat = draftSqlCtrlr.getLastChat();
+    }
+    catch (Exception e) {
+    }
+    finally {
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
+    }
 
     iter = picks.iterator();
     while( iter.hasNext() ) {

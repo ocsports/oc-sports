@@ -13,24 +13,28 @@ public class StatsSQLController extends SQLBase {
 
     public TeamStatsModel[] getTeamStats(int seasonId) throws ProcessException {
         SeasonSQLController seasonSql = null;
-        Collection teams = null;
+
+        TeamStatsModel[] teamStats = null;
         try {
             seasonSql = new SeasonSQLController();
-            teams = seasonSql.getTeamList(SportTypes.TYPE_NFL_FOOTBALL, SeasonSQLController.TEAMS_ORDER_BY_CITY);
+            Collection teams = seasonSql.getTeamList(SportTypes.TYPE_NFL_FOOTBALL, SeasonSQLController.TEAMS_ORDER_BY_CITY);
+            if (teams == null || teams.isEmpty()) {
+                throw new ProcessException("teams are missing from database");
+            }
+
+            teamStats = new TeamStatsModel[teams.size()];
+            Iterator iter = teams.iterator();
+            int counter = 0;
+            while (iter.hasNext()) {
+                TeamModel tm = (TeamModel) iter.next();
+                teamStats[counter++] = new TeamStatsModel(tm.getId(), tm.getCity() + " " + tm.getName());
+            }
         } catch (ProcessException pe) {
             throw pe;
         } finally {
             if (seasonSql != null) {
                 seasonSql.closeConnection();
             }
-        }
-
-        TeamStatsModel[] teamStats = new TeamStatsModel[teams.size()];
-        Iterator iter = teams.iterator();
-        int counter = 0;
-        while (iter.hasNext()) {
-            TeamModel tm = (TeamModel) iter.next();
-            teamStats[counter++] = new TeamStatsModel(tm.getId(), tm.getCity() + " " + tm.getName());
         }
 
         String query = "SELECT gm.home_team_in"

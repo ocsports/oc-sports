@@ -10,8 +10,9 @@
 
     Collection teams = null;
     Collection teamPlayers = null;
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
+    DraftSQLController draftSqlCtrlr = null;
     try {
+        draftSqlCtrlr = new DraftSQLController();
         teams = draftSqlCtrlr.getTeams();
         if( currTeam == null || currTeam.length() == 0 ) {
             currTeam = (String)((ArrayList)teams).get(0);
@@ -22,7 +23,7 @@
         throw e;
     }
     finally {
-        draftSqlCtrlr.closeConnection();
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
     }
     session.setAttribute("rosterTeam", currTeam);
     

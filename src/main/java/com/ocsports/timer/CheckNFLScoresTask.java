@@ -20,8 +20,8 @@ import org.json.simple.parser.JSONParser;
 public class CheckNFLScoresTask extends TimerTask {
 
     private final String url = "http://www.nfl.com/liveupdate/scorestrip/scorestrip.json";
-    private SeasonSQLController seasonSql;
-    private PoolSQLController poolSql;
+    private SeasonSQLController seasonSql = null;
+    private PoolSQLController poolSql = null;
 
     /**
      * execute the task and do not let exceptions leak as they will destroy the

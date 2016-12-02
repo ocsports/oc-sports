@@ -87,7 +87,6 @@ public class StatsServlet extends ServletBase {
     }
 
     public void byTeamPicks(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
-
         StatsSQLController sqlCtrlr = null;
         SeasonSQLController seasonCtrlr = null;
         try {

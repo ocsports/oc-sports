@@ -3,12 +3,13 @@
 <%@ page import="com.ocsports.models.*" %>
 <%@ page import="com.ocsports.sql.DraftSQLController" %>
 <%
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
     Collection players = null;
     Collection picks = null;
     String currPick = "";
     int currTeam = 0;
+    DraftSQLController draftSqlCtrlr = null;
     try {
+        draftSqlCtrlr = new DraftSQLController();
         players = draftSqlCtrlr.getPlayers(1);
         picks = draftSqlCtrlr.getDraftPicks(0, 0);
 
@@ -21,13 +22,11 @@
                 break;
             }
         }
-
     }
     catch(Exception e) {
-        throw e;
     }
     finally {
-        draftSqlCtrlr.closeConnection();
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
     }
     
     String pos = (String)session.getAttribute("playerPos");

@@ -762,7 +762,7 @@ public class AdminServlet extends ServletBase {
     // *******************************************
     public void executeSQL(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ProcessException {
         ArrayList messages = new ArrayList();
-        SQLQueryController querySQL = null;
+        SQLQueryController querySql = null;
         try {
             String script = request.getParameter("query");
             if (script == null || script.trim().equals("")) {
@@ -771,7 +771,7 @@ public class AdminServlet extends ServletBase {
                 return;
             }
 
-            querySQL = new SQLQueryController();
+            querySql = new SQLQueryController();
             script = script.trim();
             request.setAttribute("query", script);
 
@@ -801,10 +801,10 @@ public class AdminServlet extends ServletBase {
 
                     try {
                         if (testCmd.indexOf("INSERT") == 0 || testCmd.indexOf("UPDATE") == 0 || testCmd.indexOf("DELETE") == 0) {
-                            querySQL.runQuery(cmd);
+                            querySql.runQuery(cmd);
                             messages.add("SQL Command Executed Successfully");
                         } else {
-                            this.parseSQLResults(querySQL.runQueryWithResults(cmd), request);
+                            this.parseSQLResults(querySql.runQueryWithResults(cmd), request);
                             break;
                         }
                     } catch (Exception e2) {
@@ -815,15 +815,15 @@ public class AdminServlet extends ServletBase {
         } catch (Exception e) {
             messages.add(e.getClass().getName() + ": " + e.getMessage());
             try {
-                if (querySQL != null) {
-                    querySQL.rollback();
+                if (querySql != null) {
+                    querySql.rollback();
                 }
             } catch (Exception e2) {
                 messages.add("Unable to Rollback Transaction");
             }
         } finally {
-            if (querySQL != null) {
-                querySQL.closeConnection();
+            if (querySql != null) {
+                querySql.closeConnection();
             }
         }
 

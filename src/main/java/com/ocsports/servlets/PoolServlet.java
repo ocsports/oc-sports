@@ -363,6 +363,9 @@ public class PoolServlet extends ServletBase {
             if (sqlCtrlr != null) {
                 sqlCtrlr.closeConnection();
             }
+            if (seasonSql != null) {
+                seasonSql.closeConnection();
+            }
         }
     }
 
@@ -471,6 +474,9 @@ public class PoolServlet extends ServletBase {
         } finally {
             if (poolSql != null) {
                 poolSql.closeConnection();
+            }
+            if (seasonSql != null) {
+                seasonSql.closeConnection();
             }
         }
     }

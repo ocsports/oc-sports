@@ -18,8 +18,8 @@ import java.util.Iterator;
  */
 public class CheckSeriesTask extends TimerTask {
 
-    private SeasonSQLController seasonSql;
-    private PoolSQLController poolSql;
+    private SeasonSQLController seasonSql = null;
+    private PoolSQLController poolSql = null;
 
     /**
      * execute the task and do not let exceptions leak as they will destroy the

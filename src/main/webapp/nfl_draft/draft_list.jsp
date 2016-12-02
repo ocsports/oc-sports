@@ -6,15 +6,15 @@
 <%
     int currPickId = 0;
     Collection picks = null;
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
+    DraftSQLController draftSqlCtrlr = null;
     try {
+        draftSqlCtrlr = new DraftSQLController();
         picks = draftSqlCtrlr.getDraftPicks(0, 0);
     }
     catch(Exception e) {
-        throw e;
     }
     finally {
-        draftSqlCtrlr.closeConnection();
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
         if( picks == null ) picks = new ArrayList();
     }
 %>

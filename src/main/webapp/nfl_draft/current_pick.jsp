@@ -8,8 +8,9 @@
     int currTeam = 0;
     String currTeamName = "";
     StringBuffer selectedPlayerIds = new StringBuffer();
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
+    DraftSQLController draftSqlCtrlr = null;
     try {
+        draftSqlCtrlr = new DraftSQLController();
         Collection picks = draftSqlCtrlr.getDraftPicks(0, 0);
         Iterator iter = picks.iterator();
         while( iter.hasNext() ) {
@@ -26,10 +27,9 @@
         }
     }
     catch(Exception e) {
-        throw e;
     }
     finally {
-        draftSqlCtrlr.closeConnection();
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
     }
 %>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/strict.dtd">

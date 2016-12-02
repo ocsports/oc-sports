@@ -22,9 +22,9 @@ import java.util.Iterator;
  */
 public class SendReminderTask extends TimerTask {
 
-    private SeasonSQLController seasonSql;
-    private PoolSQLController poolSql;
-    private UserSQLController userSql;
+    private SeasonSQLController seasonSql = null;
+    private PoolSQLController poolSql = null;
+    private UserSQLController userSql = null;
 
     /**
      * execute the task and do not let exceptions leak as they will destroy the
