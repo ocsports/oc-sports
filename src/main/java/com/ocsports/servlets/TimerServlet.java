@@ -22,6 +22,7 @@ import javax.servlet.http.HttpSession;
  */
 public class TimerServlet extends ServletBase {
 
+    public static final int MAX_MESSAGE_COUNT = 300;
     public static final String MSG_TYPE_INFO = "INFO";
     public static final String MSG_TYPE_ERROR = "ERROR";
     public static final String MSG_TYPE_STARTUP = "STARTUP";
@@ -37,10 +38,14 @@ public class TimerServlet extends ServletBase {
      * @param model the object to add to the end of the array
      */
     public static void addMessageToQueue(TimerMessageModel model) {
+        if (timerMessages == null) {
+            timerMessages = new ArrayList();
+        }
+        // only keep the most recent X messages to display
+        while (timerMessages.size() >= MAX_MESSAGE_COUNT) {
+            timerMessages.remove(0);
+        }
         if (model != null) {
-            if (timerMessages == null) {
-                timerMessages = new ArrayList();
-            }
             timerMessages.add(model);
         }
     }

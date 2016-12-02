@@ -23,11 +23,11 @@
         <servlet-class>com.ocsports.servlets.TimerServlet</servlet-class>
         <init-param>
             <param-name>taskClass0</param-name>
-            <param-value>com.ocsports.timer.CheckGameTask,15</param-value>
+            <param-value>com.ocsports.timer.CheckGameTask,30</param-value>
         </init-param>
         <init-param>
             <param-name>taskClass1</param-name>
-            <param-value>com.ocsports.timer.CheckNFLScoresTask,5</param-value>
+            <param-value>com.ocsports.timer.CheckNFLScoresTask,6</param-value>
         </init-param>
         <init-param>
             <param-name>taskClass2</param-name>
