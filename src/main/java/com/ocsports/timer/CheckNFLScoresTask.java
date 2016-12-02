@@ -87,8 +87,8 @@ public class CheckNFLScoresTask extends TimerTask {
             JSONArray gameData = (JSONArray) it.next();
 
             String gameStatus = (String) gameData.get(2);
-            if (gameStatus.toUpperCase().indexOf("FINAL") > -1
-                    || gameStatus.toUpperCase().indexOf("F/") > -1) {
+            if (gameStatus.toUpperCase().indexOf("FINAL") == -1
+                    && gameStatus.toUpperCase().indexOf("F/") == -1) {
                 continue;
             }
 
