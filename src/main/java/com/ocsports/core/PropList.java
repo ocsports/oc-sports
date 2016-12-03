@@ -6,9 +6,6 @@ package com.ocsports.core;
  */
 public class PropList {
 
-	/* SERVLET ALIAS NAMES */
-	public static final String ADMIN_SERVLET = "SERVLET.ALIAS.ADMIN";
-
 	/* HOME PAGE ATTRIBUTES */
 	public static final String DEFAULT_LEAGUE_ID = "DEFAULT_LEAGUE_ID";
 	public static final String SHOW_SIGNUP = "SHOW_SIGNUP";

@@ -1,9 +1,3 @@
-/*
- * Title         SQLBase.java
- * Created       April 1, 2004
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.sql;
- */
 package com.ocsports.sql;
 
 import com.ocsports.core.ProcessException;
@@ -15,103 +9,76 @@ import org.apache.log4j.Logger;
 
 public abstract class SQLBase {
 
-    private static final Logger log = Logger.getLogger(SQLBase.class.getName());
+    private static DataSource datasource = null;
+    private static int connCount = 0;
 
-//    private final String DRIVER = "com.mysql.jdbc.Driver";
-//    private final String HOST = "localhost";
-//    private final String DB = "comocspo_pool";
-//    private final String USER = "comocspo_admin";
-//    private final String PWD = "AAA---Password123";
-    private java.sql.Connection conn;
-    private java.sql.PreparedStatement stmt;
     protected java.sql.ResultSet rs;
 
-    private static DataSource datasource = null;
+    private final Logger log = Logger.getLogger(this.getClass().getName());
+    private java.sql.Connection conn;
+    private java.sql.PreparedStatement stmt;
 
     public SQLBase() {
-        log.info("ENTER SQLBase constructor");
-        loadConnectionPool();
-        log.info("EXIT SQLBase constructor");
     }
 
-    private void loadConnectionPool() {
+    private boolean getDataSource() {
+        if (datasource != null) {
+            return true;
+        }
+
         try {
             InitialContext initialContext = new InitialContext();
             if (initialContext == null) {
-                String message = "There was no InitialContext in DBBroker. We're about to have some problems.";
-                throw new Exception(message);
+                throw new Exception("There was no InitialContext in DBBroker. We're about to have problems.");
             }
-            log.info("initialContext is valid");
-
             datasource = (DataSource) initialContext.lookup("java:/comp/env/jdbc/ocsportsDB");
-
             if (datasource == null) {
-                String message = "Could not find our DataSource in DBBroker. We're about to have problems.";
-                throw new Exception(message);
+                throw new Exception("Could not find our DataSource in DBBroker. We're about to have problems.");
             }
-            log.info("datasource is valid");
+            return true;
         } catch (Exception e) {
             log.error("*** " + e.getMessage());
+            return false;
         }
     }
 
     public void openConnection() throws ProcessException {
         try {
-            if (datasource == null) {
-                loadConnectionPool();
+            if (!getDataSource()) {
+                throw new ProcessException("failed to open SQL connection");
             }
             if (conn == null || conn.isClosed()) {
                 conn = datasource.getConnection();
-//                Class.forName(DRIVER).newInstance();
-//
-//                log.info("opening sql connection");
-//                String url = "jdbc:mysql://" + HOST + "/" + DB + "?user=" + USER + "&password=" + PWD;
-//                conn = DriverManager.getConnection(url);
-//                conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-//                log.info("sql connection open");
-
-                // MySQL does not support Transactions
-                /*
-                 conn.setAutoCommit(false);
-                 if(conn.getAutoCommit() == false) {
-                 throw new ProcessException("Unable to set auto commit to false");
-                 }
-                 */
+                if (++connCount > 1) {
+                    log.info("current open connections(++): " + connCount);
+                }
             }
-//        } catch (java.lang.ClassNotFoundException cnfe) {
-//            log.error(cnfe.getMessage());
-//            throw new ProcessException(cnfe);
-//        } catch (java.lang.InstantiationException ie) {
-//            log.error(ie.getMessage());
-//            throw new ProcessException(ie);
-//        } catch (java.lang.IllegalAccessException iae) {
-//            log.error(iae.getMessage());
-//            throw new ProcessException(iae);
-        } catch (java.sql.SQLException sqle) {
-            log.error(sqle.getMessage());
+            // always reset the statement and results when calling openConnection;
+            resetStatement();
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
     }
 
     public void closeConnection() {
         try {
-            if (conn != null && !conn.isClosed() && !conn.getAutoCommit()) {
-                conn.commit();
-            }
-
-            try {
+            if (rs != null) {
                 rs.close();
-            } catch (Exception e) {
             }
-            try {
+            if (stmt != null) {
                 stmt.close();
-            } catch (Exception e) {
             }
-            try {
+            if (conn != null) {
+                if (!conn.isClosed() && !conn.getAutoCommit()) {
+                    conn.commit();
+                }
                 conn.close();
-            } catch (Exception e) {
+                if (--connCount > 1) {
+                    log.info("current open connections(--): " + connCount);
+                }
             }
         } catch (SQLException sqle) {
+            log.error("failed to close SQL connection properly: " + sqle.getMessage());
         } finally {
             rs = null;
             stmt = null;
@@ -121,28 +88,28 @@ public abstract class SQLBase {
 
     public void executeUpdate(String sql, Object[] params) throws ProcessException {
         try {
-            this.openConnection();
-            this.resetStatement();
+            openConnection();
             stmt = conn.prepareStatement(sql);
-            this.addParameters(params);
-            //System.out.println("executeQuery=" + sql + "");
+            addParameters(params);
             stmt.executeUpdate();
         } catch (SQLException sqle) {
             throw new ProcessException(sqle);
+        } finally {
+            closeConnection();
         }
     }
 
     public ResultSet executeQuery(String sql, Object[] params) throws ProcessException {
         try {
-            this.openConnection();
-            this.resetStatement();
+            openConnection();
             stmt = conn.prepareStatement(sql);
-            this.addParameters(params);
-            //System.out.println("executeQueryWithResults=" + sql + "");
+            addParameters(params);
             rs = stmt.executeQuery();
             return rs;
         } catch (SQLException sqle) {
             throw new ProcessException(sqle);
+        } finally {
+            // cannot close connection here; close will also close resultset and statement
         }
     }
 
@@ -173,7 +140,7 @@ public abstract class SQLBase {
                 //already updated val + 1 in query 1;
                 nextKey = rs.getInt(1);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         } finally {
             try {

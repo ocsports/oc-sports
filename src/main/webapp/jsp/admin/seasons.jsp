@@ -20,10 +20,10 @@
     SimpleDateFormat fmt = new SimpleDateFormat();
     String seriesName = "";
     
-    String seasonsURL = response.encodeURL( AdminServlet.ALIAS + "?r=seasons" );
-    String saveSeasonURL = response.encodeURL( AdminServlet.ALIAS + "?r=saveSeason" );
-    String saveSeriesURL = response.encodeURL( AdminServlet.ALIAS + "?r=saveSeries" );
-    String saveGameURL = response.encodeURL( AdminServlet.ALIAS + "?r=saveGame" );
+    String seasonsURL = response.encodeURL("goAdmin?r=seasons");
+    String saveSeasonURL = response.encodeURL("goAdmin?r=saveSeason");
+    String saveSeriesURL = response.encodeURL("goAdmin?r=saveSeries");
+    String saveGameURL = response.encodeURL("goAdmin?r=saveGame");
 %>
 
 <h2>Season List</h2>

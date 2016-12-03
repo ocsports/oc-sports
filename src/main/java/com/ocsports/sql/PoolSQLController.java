@@ -1,9 +1,3 @@
-/*
- * Title         UserSQLController.java
- * Created       April 1, 2004
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.sql;
- */
 package com.ocsports.sql;
 
 import com.ocsports.core.ProcessException;
@@ -16,6 +10,7 @@ import com.ocsports.models.SurvivorStandingsModel;
 import com.ocsports.models.UserGameXrefModel;
 import com.ocsports.models.UserModel;
 import com.ocsports.models.UserSeriesXrefModel;
+import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +35,6 @@ public class PoolSQLController extends SQLBase {
 
         SortedMap standings = new TreeMap();
         String usersList = "";
-
         try {
             Object[] args = null;
             if (seriesId > 0) {
@@ -53,8 +47,7 @@ public class PoolSQLController extends SQLBase {
                     new Integer(Status.GAME_STATUS_WON),
                     new Integer(Status.GAME_STATUS_LOST)};
             }
-
-            this.executeQuery(query, args);
+            executeQuery(query, args);
 
             NumberFormat fmt = NumberFormat.getInstance();
             fmt.setMinimumIntegerDigits(4);
@@ -138,7 +131,7 @@ public class PoolSQLController extends SQLBase {
                 query = "SELECT * FROM user_tbl where league_no_in = ? AND user_no_in NOT IN (" + usersList + ")";
             }
 
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null) {
                 while (rs.next()) {
                     UserModel um2 = UserSQLController.loadUserModel(rs);
@@ -146,10 +139,9 @@ public class PoolSQLController extends SQLBase {
                     standings.put(fmt.format(1000) + um2.getLoginId().toLowerCase(), sm2);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return standings;
     }
 
@@ -161,7 +153,6 @@ public class PoolSQLController extends SQLBase {
         fmt.setGroupingUsed(false);
 
         SortedMap standings = new TreeMap();
-
         String query = "SELECT * FROM user_series_xref_tbl usx, user_tbl u"
                 + " WHERE usx.user_no_in = u.user_no_in"
                 + " AND u.league_no_in = ?";
@@ -169,16 +160,14 @@ public class PoolSQLController extends SQLBase {
             query += " AND usx.series_no_in = ?";
         }
         query += " ORDER BY usx.user_no_in, usx.series_no_in";
-
         try {
             if (seriesId > 0) {
-                this.executeQuery(query, new Object[]{new Integer(leagueId), new Integer(seriesId)});
+                executeQuery(query, new Object[]{new Integer(leagueId), new Integer(seriesId)});
             } else {
-                this.executeQuery(query, new Object[]{new Integer(leagueId)});
+                executeQuery(query, new Object[]{new Integer(leagueId)});
             }
 
             String usersList = "";
-
             if (rs != null) {
                 HashMap seriesMap = new HashMap();
                 int lastUserId = -1;
@@ -218,7 +207,6 @@ public class PoolSQLController extends SQLBase {
                     if (status == Status.LOCK_STATUS_TIE) {
                         ties++;
                     }
-
                     lastUserId = userId;
                 }
                 if (lastUserId != -1) {
@@ -233,7 +221,7 @@ public class PoolSQLController extends SQLBase {
             } else {
                 query = "SELECT * FROM user_tbl WHERE league_no_in = ? AND user_no_in NOT IN (" + usersList + ") ORDER BY user_login_id_vc";
             }
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null) {
                 while (rs.next()) {
                     UserModel um2 = UserSQLController.loadUserModel(rs);
@@ -241,10 +229,9 @@ public class PoolSQLController extends SQLBase {
                     standings.put(fmt.format(1000) + fmt.format(1000) + fmt.format(0) + um2.getLoginId().toLowerCase(), lsm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return standings;
     }
 
@@ -256,7 +243,6 @@ public class PoolSQLController extends SQLBase {
         fmt.setGroupingUsed(false);
 
         SortedMap standings = new TreeMap();
-
         String query = "SELECT * FROM user_series_xref_tbl usx, user_tbl u"
                 + " WHERE usx.user_no_in = u.user_no_in"
                 + " AND u.league_no_in = ?";
@@ -264,16 +250,13 @@ public class PoolSQLController extends SQLBase {
             query += " AND usx.series_no_in = ?";
         }
         query += " ORDER BY usx.user_no_in, usx.series_no_in DESC";
-
         try {
             if (seriesId > 0) {
-                this.executeQuery(query, new Object[]{new Integer(leagueId), new Integer(seriesId)});
+                executeQuery(query, new Object[]{new Integer(leagueId), new Integer(seriesId)});
             } else {
-                this.executeQuery(query, new Object[]{new Integer(leagueId)});
+                executeQuery(query, new Object[]{new Integer(leagueId)});
             }
-
             String usersList = "";
-
             if (rs != null) {
                 HashMap seriesMap = new HashMap();
                 int lastUserId = -1;
@@ -319,7 +302,7 @@ public class PoolSQLController extends SQLBase {
             } else {
                 query = "SELECT * FROM user_tbl WHERE league_no_in = ? AND user_no_in NOT IN (" + usersList + ") ORDER BY user_login_id_vc";
             }
-            this.executeQuery(query, new Object[]{new Integer(leagueId)});
+            executeQuery(query, new Object[]{new Integer(leagueId)});
             if (rs != null) {
                 while (rs.next()) {
                     UserModel um2 = UserSQLController.loadUserModel(rs);
@@ -327,10 +310,9 @@ public class PoolSQLController extends SQLBase {
                     standings.put("0" + um2.getLoginId().toLowerCase(), ssm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return standings;
     }
 
@@ -369,17 +351,17 @@ public class PoolSQLController extends SQLBase {
             Integer sportTypeID = new Integer(sportType);
             Object[] args = new Object[]{sportTypeID, sportTypeID, sportTypeID, sportTypeID};
 
-            this.executeQuery(query, args);
+            executeQuery(query, args);
             if (rs != null) {
                 int wins = 0, losses = 0, ties = 0, beatSpread = 0;
                 int lastTeamId = 0, type = 0;
                 while (rs.next()) {
                 }
             }
-            return map;
-        } catch (Exception e) {
-            throw new ProcessException(e);
+        } catch (SQLException sqle) {
+            throw new ProcessException(sqle);
         }
+        return map;
     }
 
     public HashMap getUserPicksXrefMap(int leagueId, int seriesId, int userId) throws ProcessException {
@@ -394,23 +376,21 @@ public class PoolSQLController extends SQLBase {
         }
 
         HashMap picks = new HashMap();
-
         try {
-            Object[] args = null;
+            Object[] args;
             if (userId > 0) {
                 args = new Object[]{new Integer(leagueId), new Integer(seriesId), new Integer(userId)};
             } else {
                 args = new Object[]{new Integer(leagueId), new Integer(seriesId)};
             }
-            this.executeQuery(query, args);
-
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next()) {
-                    UserGameXrefModel ugxm = this.loadUserGameXrefModel(rs);
+                    UserGameXrefModel ugxm = loadUserGameXrefModel(rs);
                     picks.put(String.valueOf(ugxm.getUserId() + "^" + ugxm.getGameId()), ugxm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return picks;
@@ -427,24 +407,21 @@ public class PoolSQLController extends SQLBase {
         query += " ORDER BY usx.series_no_in";
 
         HashMap picks = new HashMap();
-
         try {
-            Object[] args = null;
+            Object[] args;
             if (seriesId > 0) {
                 args = new Object[]{new Integer(leagueId), new Integer(seriesId)};
             } else {
                 args = new Object[]{new Integer(leagueId)};
             }
-
-            this.executeQuery(query, args);
-
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next()) {
-                    UserSeriesXrefModel usxm = this.loadUserSeriesXrefModel(rs);
+                    UserSeriesXrefModel usxm = loadUserSeriesXrefModel(rs);
                     picks.put(usxm.getUserId() + "," + usxm.getSeriesId(), usxm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return picks;
@@ -455,19 +432,18 @@ public class PoolSQLController extends SQLBase {
                 + " FROM user_series_xref_tbl usx"
                 + " WHERE usx.user_no_in = ?"
                 + " ORDER BY usx.series_no_in";
-
         Collection models = new ArrayList();
         try {
-            Object[] args = null;
+            Object[] args;
             args = new Object[]{new Integer(userId)};
-            this.executeQuery(query, args);
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next()) {
-                    UserSeriesXrefModel usxm = this.loadUserSeriesXrefModel(rs);
+                    UserSeriesXrefModel usxm = loadUserSeriesXrefModel(rs);
                     models.add(usxm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return models;
@@ -480,20 +456,17 @@ public class PoolSQLController extends SQLBase {
                 + "ORDER BY ugx.game_no_in";
 
         ArrayList userPicks = new ArrayList();
-
         try {
             Object[] args = new Object[]{new Integer(seriesId), new Integer(userId)};
-            this.executeQuery(query, args);
-
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next()) {
-                    userPicks.add(this.loadUserGameXrefModel(rs));
+                    userPicks.add(loadUserGameXrefModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return userPicks;
     }
 
@@ -503,18 +476,15 @@ public class PoolSQLController extends SQLBase {
                 + "AND user_no_in = ?";
 
         UserGameXrefModel ugm = null;
-
         try {
             Object[] args = new Object[]{new Integer(gameId), new Integer(userId)};
-            this.executeQuery(query, args);
-
+            executeQuery(query, args);
             if (rs != null && rs.next()) {
-                ugm = this.loadUserGameXrefModel(rs);
+                ugm = loadUserGameXrefModel(rs);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return ugm;
     }
 
@@ -524,18 +494,15 @@ public class PoolSQLController extends SQLBase {
                 + "AND user_no_in = ?";
 
         UserSeriesXrefModel usm = null;
-
         try {
             Object[] args = new Object[]{new Integer(seriesId), new Integer(userId)};
-            this.executeQuery(query, args);
-
+            executeQuery(query, args);
             if (rs != null && rs.next()) {
-                usm = this.loadUserSeriesXrefModel(rs);
+                usm = loadUserSeriesXrefModel(rs);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return usm;
     }
 
@@ -549,27 +516,23 @@ public class PoolSQLController extends SQLBase {
                 + ", ugame_timestamp_dt) "
                 + "VALUES( ?,?,?,?,?,?,? )";
 
-        java.util.Date currentDt = new java.util.Date();
-
         Object[] args = new Object[]{new Integer(gameId),
             new Integer(userId),
             new Integer(selectedTeamId),
             "",
             new Integer(defaultPick),
             new Integer(Status.GAME_STATUS_NO_DECISION),
-            currentDt};
-        this.executeUpdate(query, args);
-
-        this.createAuditPick(currentDt, userId, gameId, -1, selectedTeamId, AuditPickModel.TYPE_GAME);
+            new java.util.Date()};
+        executeUpdate(query, args);
+        createAuditPick(new java.util.Date(), userId, gameId, -1, selectedTeamId, AuditPickModel.TYPE_GAME);
     }
 
     public void updateUserGameStatus(int gameId, int teamId, int status) throws ProcessException {
         String query = "UPDATE user_game_xref_tbl SET ugame_status_si = ?"
                 + " WHERE game_no_in = ?"
                 + " AND team_no_in = ?";
-
         Object[] args = new Object[]{new Integer(status), new Integer(gameId), new Integer(teamId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateUserSurvivorStatus(int seriesId, int userId, int status) throws ProcessException {
@@ -577,9 +540,8 @@ public class PoolSQLController extends SQLBase {
                 + " SET survivor_status_si = ?"
                 + " WHERE series_no_in = ?"
                 + " AND user_no_in = ?";
-
         Object[] args = new Object[]{new Integer(status), new Integer(seriesId), new Integer(userId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateUserLockStatus(int seriesId, int userId, int status) throws ProcessException {
@@ -587,9 +549,8 @@ public class PoolSQLController extends SQLBase {
                 + " SET lock_status_si = ?"
                 + " WHERE series_no_in = ?"
                 + " AND user_no_in = ?";
-
         Object[] args = new Object[]{new Integer(status), new Integer(seriesId), new Integer(userId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateSurvivorStatus(int seriesId, int teamId, int status) throws ProcessException {
@@ -597,9 +558,8 @@ public class PoolSQLController extends SQLBase {
                 + " SET survivor_status_si = ?"
                 + " WHERE series_no_in = ?"
                 + " AND survivor_team_in = ?";
-
         Object[] args = new Object[]{new Integer(status), new Integer(seriesId), new Integer(teamId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateLockStatus(int seriesId, int teamId, int status) throws ProcessException {
@@ -607,20 +567,19 @@ public class PoolSQLController extends SQLBase {
                 + " SET lock_status_si = ?"
                 + " WHERE series_no_in = ?"
                 + " AND lock_team_in = ?";
-
         Object[] args = new Object[]{new Integer(status), new Integer(seriesId), new Integer(teamId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void removeUserGameXref(int gameId, int userId) throws ProcessException {
         String query = "DELETE FROM user_game_xref_tbl "
                 + "WHERE user_no_in = ? AND game_no_in = ?";
-
         Object[] args = new Object[]{new Integer(userId), new Integer(gameId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void createUserSeriesXref(int seriesId, int userId, int lockOfWeek, int survivor, String notes) throws ProcessException {
+        java.util.Date currentDt = new java.util.Date();
         String query = "INSERT INTO user_series_xref_tbl( user_no_in"
                 + ", series_no_in"
                 + ", survivor_team_in"
@@ -631,8 +590,6 @@ public class PoolSQLController extends SQLBase {
                 + ", useries_timestamp_dt)"
                 + " VALUES( ?,?,?,?,?,?,?,? )";
 
-        java.util.Date currentDt = new java.util.Date();
-
         Object[] args = new Object[]{new Integer(userId),
             new Integer(seriesId),
             new Integer(survivor),
@@ -641,13 +598,12 @@ public class PoolSQLController extends SQLBase {
             new Integer(Status.SURVIVOR_STATUS_NO_DECISION),
             new Integer(Status.LOCK_STATUS_NO_DECISION),
             currentDt};
-        this.executeUpdate(query, args);
-
+        executeUpdate(query, args);
         if (lockOfWeek > 0) {
-            this.createAuditPick(currentDt, userId, -1, seriesId, lockOfWeek, AuditPickModel.TYPE_LOCK);
+            createAuditPick(currentDt, userId, -1, seriesId, lockOfWeek, AuditPickModel.TYPE_LOCK);
         }
         if (survivor > 0) {
-            this.createAuditPick(currentDt, userId, -1, seriesId, survivor, AuditPickModel.TYPE_SURVIVOR);
+            createAuditPick(currentDt, userId, -1, seriesId, survivor, AuditPickModel.TYPE_SURVIVOR);
         }
     }
 
@@ -655,8 +611,7 @@ public class PoolSQLController extends SQLBase {
         String query = "DELETE FROM user_series_xref_tbl"
                 + " WHERE series_no_in = ?"
                 + " AND user_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{new Integer(seriesId), new Integer(userId)});
+        executeUpdate(query, new Object[]{new Integer(seriesId), new Integer(userId)});
     }
 
     public void setGameDefaultPicks(GameModel gm) throws ProcessException {
@@ -667,7 +622,7 @@ public class PoolSQLController extends SQLBase {
                     + " WHERE game_no_in = ?"
                     + " AND team_no_in > 0"
                     + " ORDER BY user_no_in ASC";
-            this.executeQuery(query, new Object[]{new Integer(gm.getId())});
+            executeQuery(query, new Object[]{new Integer(gm.getId())});
             if (rs != null) {
                 while (rs.next()) {
                     if (userIds.equals("")) {
@@ -690,7 +645,7 @@ public class PoolSQLController extends SQLBase {
             }
             query += " ORDER BY u.league_no_in, u.user_no_in";
             Object[] args = new Object[]{new Integer(gm.getSeriesId())};
-            this.executeQuery(query, args);
+            executeQuery(query, args);
 
             //must put in a list to complete the result set
             //since we will re-use for each user
@@ -723,12 +678,12 @@ public class PoolSQLController extends SQLBase {
                     }
                     if (pickTeam > 0) {
                         System.out.println("updating default pick: user=" + um.getUserId() + "; defaultPick: " + um.getDefaultPick() + "; game=" + gm.getId() + "; pickTeam=" + pickTeam);
-                        this.removeUserGameXref(gm.getId(), um.getUserId());
-                        this.createUserGameXref(gm.getId(), um.getUserId(), pickTeam, 1);
+                        removeUserGameXref(gm.getId(), um.getUserId());
+                        createUserGameXref(gm.getId(), um.getUserId(), pickTeam, 1);
                     }
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
     }
@@ -743,35 +698,32 @@ public class PoolSQLController extends SQLBase {
 
         HashMap teamsAlreadyUsed = new HashMap();
         try {
-            this.executeQuery(query, new Object[]{new Integer(userId), new Integer(seriesOrder)});
+            executeQuery(query, new Object[]{new Integer(userId), new Integer(seriesOrder)});
             if (rs != null) {
                 while (rs.next()) {
                     teamsAlreadyUsed.put(String.valueOf(rs.getInt(1)), "");
                 }
             }
-            return teamsAlreadyUsed;
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return teamsAlreadyUsed;
     }
 
     public int getUserSurvivorStatus(int userId) throws ProcessException {
         String query = "SELECT count(*) FROM user_series_xref_tbl"
                 + " WHERE user_no_in = ?"
                 + " AND survivor_status_si = ?";
+        int count = 0;
         try {
-            int count = 0;
-
-            this.executeQuery(query, new Object[]{new Integer(userId), new Integer(Status.SURVIVOR_STATUS_LOST)});
+            executeQuery(query, new Object[]{new Integer(userId), new Integer(Status.SURVIVOR_STATUS_LOST)});
             if (rs != null && rs.next()) {
                 count = rs.getInt(1);
             }
-
-            return (count > 0 ? Status.SURVIVOR_STATUS_LOST : Status.SURVIVOR_STATUS_NO_DECISION);
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
+        return (count > 0 ? Status.SURVIVOR_STATUS_LOST : Status.SURVIVOR_STATUS_NO_DECISION);
     }
 
     public void createAuditPick(java.util.Date dt, int userId, int gameId, int seriesId, int teamId, String type) throws ProcessException {
@@ -789,7 +741,7 @@ public class PoolSQLController extends SQLBase {
             new Integer(gameId),
             new Integer(seriesId),
             new Integer(teamId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void cleanupUserSeries(int seriesId) throws ProcessException {
@@ -818,7 +770,7 @@ public class PoolSQLController extends SQLBase {
                 query += " AND u.user_no_in NOT IN (" + userIN + ")";
             }
             Object[] args = new Object[]{new Integer(seriesId)};
-            this.executeQuery(query, args);
+            executeQuery(query, args);
 
             //must put in a list to complete the result set
             //since we will re-use for each user
@@ -835,9 +787,9 @@ public class PoolSQLController extends SQLBase {
                 while (iter.hasNext()) {
                     int userId = ((Integer) iter.next()).intValue();
                     System.out.println("Creating User-Series-Xref records for userId=" + userId);
-                    this.createUserSeriesXref(seriesId, userId, -1, -1, "");
-                    this.updateUserLockStatus(seriesId, userId, Status.LOCK_STATUS_LOST);
-                    this.updateUserSurvivorStatus(seriesId, userId, Status.SURVIVOR_STATUS_LOST);
+                    createUserSeriesXref(seriesId, userId, -1, -1, "");
+                    updateUserLockStatus(seriesId, userId, Status.LOCK_STATUS_LOST);
+                    updateUserSurvivorStatus(seriesId, userId, Status.SURVIVOR_STATUS_LOST);
                 }
             }
 
@@ -846,16 +798,16 @@ public class PoolSQLController extends SQLBase {
             Object[] args2 = new Object[]{new Integer(Status.LOCK_STATUS_LOST),
                 new Integer(seriesId),
                 new Integer(Status.LOCK_STATUS_NO_DECISION)};
-            this.executeUpdate(query, args2);
+            executeUpdate(query, args2);
 
             //3rd step - set status for anyone who did notpick a survivor
             query = "UPDATE user_series_xref_tbl SET survivor_status_si = ? WHERE series_no_in = ? AND survivor_status_si = ?";
             Object[] args3 = new Object[]{new Integer(Status.SURVIVOR_STATUS_LOST),
                 new Integer(seriesId),
                 new Integer(Status.SURVIVOR_STATUS_NO_DECISION)};
-            this.executeUpdate(query, args3);
-        } catch (Exception e) {
-            throw new ProcessException(e);
+            executeUpdate(query, args3);
+        } catch (SQLException sqle) {
+            throw new ProcessException(sqle);
         }
     }
 
@@ -868,19 +820,17 @@ public class PoolSQLController extends SQLBase {
                 + " UNION ALL "
                 + "SELECT 2, count(*) FROM user_game_xref_tbl x, game_tbl g WHERE x.game_no_in = g.game_no_in AND g.series_no_in = ? and x.user_no_in = ?"
                 + " ORDER BY 1 ASC";
-
         try {
             Object[] args = new Object[]{new Integer(seriesId),
                 new Integer(seriesId),
                 new Integer(um.getUserId())};
-            this.executeQuery(query, args);
+            executeQuery(query, args);
             rs.next();
             int gameCount = rs.getInt(2);
             rs.next();
             int userGameCount = rs.getInt(2);
-
             return (gameCount > userGameCount);
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
     }
@@ -892,11 +842,10 @@ public class PoolSQLController extends SQLBase {
 
         float adjHomeScore = gm.getHomeScore() + gm.getSpread();
         float adjAwayScore = gm.getAwayScore();
-
         int homeStatus = (adjHomeScore >= adjAwayScore ? Status.GAME_STATUS_WON : Status.GAME_STATUS_LOST);
         int awayStatus = (adjAwayScore >= adjHomeScore ? Status.GAME_STATUS_WON : Status.GAME_STATUS_LOST);
-        this.updateUserGameStatus(gm.getId(), gm.getHomeTeamId(), homeStatus);
-        this.updateUserGameStatus(gm.getId(), gm.getAwayTeamId(), awayStatus);
+        updateUserGameStatus(gm.getId(), gm.getHomeTeamId(), homeStatus);
+        updateUserGameStatus(gm.getId(), gm.getAwayTeamId(), awayStatus);
 
         int homeLockStatus = Status.LOCK_STATUS_NO_DECISION;
         int awayLockStatus = Status.LOCK_STATUS_NO_DECISION;
@@ -910,8 +859,8 @@ public class PoolSQLController extends SQLBase {
             homeLockStatus = Status.LOCK_STATUS_LOST;
             awayLockStatus = Status.LOCK_STATUS_WON;
         }
-        this.updateLockStatus(gm.getSeriesId(), gm.getHomeTeamId(), homeLockStatus);
-        this.updateLockStatus(gm.getSeriesId(), gm.getAwayTeamId(), awayLockStatus);
+        updateLockStatus(gm.getSeriesId(), gm.getHomeTeamId(), homeLockStatus);
+        updateLockStatus(gm.getSeriesId(), gm.getAwayTeamId(), awayLockStatus);
 
         int homeSurvivorStatus = Status.SURVIVOR_STATUS_NO_DECISION;
         int awaySurvivorStatus = Status.SURVIVOR_STATUS_NO_DECISION;
@@ -925,11 +874,11 @@ public class PoolSQLController extends SQLBase {
             homeSurvivorStatus = Status.SURVIVOR_STATUS_LOST;
             awaySurvivorStatus = Status.SURVIVOR_STATUS_WON;
         }
-        this.updateSurvivorStatus(gm.getSeriesId(), gm.getHomeTeamId(), homeSurvivorStatus);
-        this.updateSurvivorStatus(gm.getSeriesId(), gm.getAwayTeamId(), awaySurvivorStatus);
+        updateSurvivorStatus(gm.getSeriesId(), gm.getHomeTeamId(), homeSurvivorStatus);
+        updateSurvivorStatus(gm.getSeriesId(), gm.getAwayTeamId(), awaySurvivorStatus);
     }
 
-    public static UserGameXrefModel loadUserGameXrefModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static UserGameXrefModel loadUserGameXrefModel(java.sql.ResultSet rs) throws SQLException {
         UserGameXrefModel ugm = new UserGameXrefModel();
         ugm.setUserId(rs.getInt("user_no_in"));
         ugm.setGameId(rs.getInt("game_no_in"));
@@ -941,7 +890,7 @@ public class PoolSQLController extends SQLBase {
         return ugm;
     }
 
-    public static UserSeriesXrefModel loadUserSeriesXrefModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static UserSeriesXrefModel loadUserSeriesXrefModel(java.sql.ResultSet rs) throws SQLException {
         UserSeriesXrefModel usm = new UserSeriesXrefModel();
         usm.setUserId(rs.getInt("user_no_in"));
         usm.setSeriesId(rs.getInt("series_no_in"));
@@ -954,7 +903,7 @@ public class PoolSQLController extends SQLBase {
         return usm;
     }
 
-    public static AuditPickModel loadAuditPickModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static AuditPickModel loadAuditPickModel(java.sql.ResultSet rs) throws SQLException {
         AuditPickModel apm = new AuditPickModel();
         apm.setTimestamp(rs.getTimestamp("pick_timestamp_dt"));
         apm.setType(rs.getString("pick_type_vc"));

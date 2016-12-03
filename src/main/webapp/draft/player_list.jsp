@@ -37,15 +37,16 @@
     if( hideSelected == null ) hideSelected = "";
 
     Collection players = new ArrayList();
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
+    DraftSQLController draftSqlCtrlr = null;
     try {
+        draftSqlCtrlr = new DraftSQLController();
         players = draftSqlCtrlr.getPlayers( pos, team, hideSelected, pname, 1 );
     }
     catch(Exception e) {
         throw e;
     }
     finally {
-        draftSqlCtrlr.closeConnection();
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
         if( players == null ) players = new ArrayList();
     }
     String playerListURL = response.encodeURL(request.getContextPath() + "/draft/player_list.jsp");

@@ -3,8 +3,17 @@
 <%@page import="com.ocsports.sql.UserSQLController"%>
 <%@page import="com.ocsports.models.SystemNoticeModel"%>
 <%
-    UserSQLController userSql = new UserSQLController();
-    Collection notices = userSql.getSystemNotices(-1, true);
+    UserSQLController userSql = null;
+    Collection notices = null;
+    try {
+        userSql = new UserSQLController();
+        notices = userSql.getSystemNotices(-1, true);
+    }
+    catch(Exception ex) {
+    }
+    finally {
+        if (userSql != null) userSql.closeConnection();
+    }
     
     String loginError = (String)request.getAttribute("loginError");
     String loginId = (String)request.getAttribute("loginId");

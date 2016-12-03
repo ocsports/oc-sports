@@ -1,9 +1,3 @@
-/*
- * Title         SeasonSQLController.java
- * Created       April 1, 2004
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.sql;
- */
 package com.ocsports.sql;
 
 import com.ocsports.core.ProcessException;
@@ -13,6 +7,7 @@ import com.ocsports.models.SeasonSeriesModel;
 import com.ocsports.models.TeamConferenceModel;
 import com.ocsports.models.TeamDivisionModel;
 import com.ocsports.models.TeamModel;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,11 +27,9 @@ public class SeasonSQLController extends SQLBase {
                 + " WHERE season_no_in = ?"
                 + " AND series_start_dt < ?"
                 + " ORDER BY series_end_dt DESC";
+        int nextSeriesId = -1;
         try {
-            int nextSeriesId = -1;
-
-            this.executeQuery(query, new Object[]{new Integer(seasonId), new java.util.Date()});
-
+            executeQuery(query, new Object[]{new Integer(seasonId), new java.util.Date()});
             if (rs != null && rs.next()) {
                 nextSeriesId = rs.getInt("series_no_in");
             } else {
@@ -45,16 +38,15 @@ public class SeasonSQLController extends SQLBase {
                         + " FROM season_series_tbl"
                         + " WHERE season_no_in = ?"
                         + " ORDER BY series_start_dt";
-                this.executeQuery(query, new Object[]{new Integer(seasonId)});
+                executeQuery(query, new Object[]{new Integer(seasonId)});
                 if (rs != null && rs.next()) {
                     nextSeriesId = rs.getInt("series_no_in");
                 }
             }
-
-            return nextSeriesId;
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return nextSeriesId;
     }
 
     public void updateTeam(TeamModel tm) throws ProcessException {
@@ -75,7 +67,7 @@ public class SeasonSQLController extends SQLBase {
             new Integer((tm.isTurf() ? 1 : 0)),
             tm.getWeatherURL(),
             new Integer(tm.getId())};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateSeason(int seasonId, int sportType, String name, String prefix, boolean active) throws ProcessException {
@@ -85,13 +77,12 @@ public class SeasonSQLController extends SQLBase {
                 + " , season_name_vc = ?"
                 + " , series_prefix_vc = ?"
                 + " WHERE season_no_in = ?";
-
         Object[] args = new Object[]{new Integer(sportType),
             new Integer((active ? 1 : 0)),
             name,
             prefix,
             new Integer(seasonId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateSeasonSeries(int seriesId, long startDate, long endDate, boolean publishSpreads, boolean cleanup, boolean reminder) throws ProcessException {
@@ -102,14 +93,13 @@ public class SeasonSQLController extends SQLBase {
                 + " , series_cleanup_si = ?"
                 + " , series_reminder_si = ?"
                 + " WHERE series_no_in = ?";
-
         Object[] args = new Object[]{new java.util.Date(startDate),
             new java.util.Date(endDate),
             new Integer((publishSpreads ? 1 : 0)),
             new Integer((cleanup ? 1 : 0)),
             new Integer((reminder ? 1 : 0)),
             new Integer(seriesId)};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public void updateGame(GameModel gm) throws ProcessException {
@@ -122,7 +112,6 @@ public class SeasonSQLController extends SQLBase {
                 + ", game_notes_vc = ?"
                 + ", game_posted_si = ?"
                 + " WHERE game_no_in = ?";
-
         Object[] args = new Object[]{new java.util.Date(gm.getStartDate()),
             new Integer(gm.getAwayTeamId()),
             new Integer(gm.getHomeTeamId()),
@@ -132,7 +121,7 @@ public class SeasonSQLController extends SQLBase {
             (gm.getNotes() == null ? "" : gm.getNotes()),
             new Integer((gm.isPosted() ? 1 : 0)),
             new Integer(gm.getId())};
-        this.executeUpdate(query, args);
+        executeUpdate(query, args);
     }
 
     public int createGame(GameModel gm) throws ProcessException {
@@ -157,66 +146,60 @@ public class SeasonSQLController extends SQLBase {
             new Integer(gm.getHomeTeamId()),
             new Float(gm.getSpread()),
             gm.getNotes(),
-            new Boolean(false),
-            new Boolean(false)};
-        this.executeUpdate(query, args);
+            Boolean.valueOf(false),
+            Boolean.valueOf(false)};
+        executeUpdate(query, args);
         return newGameId;
     }
 
     public SeasonModel getSeasonModel(int seasonId) throws ProcessException {
         String query = "SELECT * FROM season_tbl "
                 + "WHERE season_no_in = ?";
-
         SeasonModel sm = null;
         try {
-            this.executeQuery(query, new Object[]{new Integer(seasonId)});
+            executeQuery(query, new Object[]{new Integer(seasonId)});
             if (rs != null && rs.next()) {
                 sm = loadSeasonModel(rs);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return sm;
     }
 
     public SeasonSeriesModel getSeasonSeriesModel(int seriesId) throws ProcessException {
         String query = "SELECT * FROM season_series_tbl "
                 + "WHERE series_no_in = ?";
-
         SeasonSeriesModel sm = null;
         try {
-            this.executeQuery(query, new Object[]{new Integer(seriesId)});
+            executeQuery(query, new Object[]{new Integer(seriesId)});
             if (rs != null && rs.next()) {
                 sm = loadSeasonSeriesModel(rs);
                 //what is the sequence for this series???
                 query = "SELECT COUNT(*) FROM season_series_tbl WHERE season_no_in = ? and series_no_in <= ?";
-                this.executeQuery(query, new Object[]{new Integer(sm.getSeasonId()), new Integer(seriesId)});
+                executeQuery(query, new Object[]{new Integer(sm.getSeasonId()), new Integer(seriesId)});
                 if (rs != null && rs.next()) {
                     sm.setSequence(rs.getInt(1));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return sm;
     }
 
     public GameModel getGameModel(int gameId) throws ProcessException {
         String query = "SELECT * FROM game_tbl "
                 + "WHERE game_no_in = ?";
-
         GameModel gm = null;
         try {
-            this.executeQuery(query, new Object[]{new Integer(gameId)});
+            executeQuery(query, new Object[]{new Integer(gameId)});
             if (rs != null && rs.next()) {
                 gm = loadGameModel(rs);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return gm;
     }
 
@@ -238,17 +221,14 @@ public class SeasonSQLController extends SQLBase {
                 args = new Object[]{new Integer(sportType)};
             }
             query.append(" ORDER BY season_active_si DESC, season_name_vc");
-
-            this.executeQuery(query.toString(), args);
+            executeQuery(query.toString(), args);
             if (rs != null) {
                 while (rs.next()) {
-                    seasons.add(this.loadSeasonModel(rs));
+                    seasons.add(SeasonSQLController.loadSeasonModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
-        } catch (Exception e) {
-            throw new ProcessException(e);
         }
         return seasons;
     }
@@ -260,7 +240,7 @@ public class SeasonSQLController extends SQLBase {
 
         ArrayList series = new ArrayList();
         try {
-            this.executeQuery(query, new Object[]{new Integer(seasonId)});
+            executeQuery(query, new Object[]{new Integer(seasonId)});
             if (rs != null) {
                 int seriesSeq = 0;
                 while (rs.next()) {
@@ -269,7 +249,7 @@ public class SeasonSQLController extends SQLBase {
                     series.add(ssm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return series;
@@ -277,16 +257,15 @@ public class SeasonSQLController extends SQLBase {
 
     public Collection getGamesBySeries(int seriesId) throws ProcessException {
         String query = "SELECT * FROM game_tbl WHERE series_no_in = ? ORDER BY game_start_dt, game_no_in";
-
         ArrayList games = new ArrayList();
         try {
-            this.executeQuery(query, new Object[]{new Integer(seriesId)});
+            executeQuery(query, new Object[]{new Integer(seriesId)});
             if (rs != null) {
                 while (rs.next()) {
                     games.add(loadGameModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return games;
@@ -294,51 +273,43 @@ public class SeasonSQLController extends SQLBase {
 
     public void deleteGame(int gameId) throws ProcessException {
         String query = "DELETE FROM game_tbl where game_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{new Integer(gameId)});
+        executeUpdate(query, new Object[]{new Integer(gameId)});
     }
 
     public TeamModel getTeamModel(int teamId) throws ProcessException {
         String query = "SELECT * FROM team_tbl "
                 + "WHERE team_no_in = ?";
-
         TeamModel tm = null;
         try {
-            this.executeQuery(query, new Object[]{new Integer(teamId)});
+            executeQuery(query, new Object[]{new Integer(teamId)});
             if (rs != null && rs.next()) {
-                tm = this.loadTeamModel(rs);
+                tm = SeasonSQLController.loadTeamModel(rs);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return tm;
     }
 
     public HashMap getTeamMap(int sportType) throws ProcessException {
         String query = "SELECT * FROM team_tbl WHERE sport_type_si = ? ORDER by team_no_in";
-
         LinkedHashMap map = new LinkedHashMap();
-
         try {
-            this.executeQuery(query, new Object[]{new Integer(sportType)});
-
+            executeQuery(query, new Object[]{new Integer(sportType)});
             if (rs != null) {
                 while (rs.next()) {
-                    TeamModel tm = this.loadTeamModel(rs);
+                    TeamModel tm = SeasonSQLController.loadTeamModel(rs);
                     map.put(String.valueOf(tm.getId()), tm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return map;
     }
 
     public Collection getTeamList(int sportType, int orderBy) throws ProcessException {
         String query = "SELECT * FROM team_tbl WHERE sport_type_si = ?";
-
         switch (orderBy) {
             case TEAMS_ORDER_BY_ID:
                 query += " ORDER BY team_no_in";
@@ -359,30 +330,25 @@ public class SeasonSQLController extends SQLBase {
                 query += " ORDER BY team_no_in";
                 break;
         }
-
         ArrayList teams = new ArrayList();
-
         try {
-            this.executeQuery(query, new Object[]{new Integer(sportType)});
-
+            executeQuery(query, new Object[]{new Integer(sportType)});
             if (rs != null) {
                 while (rs.next()) {
-                    TeamModel tm = this.loadTeamModel(rs);
+                    TeamModel tm = SeasonSQLController.loadTeamModel(rs);
                     teams.add(tm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return teams;
     }
 
     public TeamModel findTeam(String city, String name, String abrv) throws ProcessException {
+        TeamModel tm = null;
         try {
-            TeamModel tm = null;
             ArrayList args = new ArrayList();
-
             String query = "SELECT * FROM team_tbl WHERE team_no_in > 0";
             if (city != null && city.length() > 0) {
                 query += " AND team_city_vc LIKE ?";
@@ -398,36 +364,32 @@ public class SeasonSQLController extends SQLBase {
             }
             query += " ORDER BY team_city_vc, team_name_vc";
 
-            this.executeQuery(query, args.toArray());
+            executeQuery(query, args.toArray());
             if (rs != null && rs.next()) {
-                tm = this.loadTeamModel(rs);
+                tm = SeasonSQLController.loadTeamModel(rs);
             }
-            return tm;
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return tm;
     }
 
     public Collection getTeamConferenceList(int sportType) throws ProcessException {
         String query = "SELECT * FROM team_conference_tbl"
                 + " WHERE sport_type_si = ?"
                 + " ORDER by team_conf_name_vc";
-
         ArrayList conferenceModels = new ArrayList();
-
         try {
-            this.executeQuery(query, new Object[]{new Integer(sportType)});
-
+            executeQuery(query, new Object[]{new Integer(sportType)});
             if (rs != null) {
                 while (rs.next()) {
-                    TeamConferenceModel tcm = this.loadTeamConferenceModel(rs);
+                    TeamConferenceModel tcm = SeasonSQLController.loadTeamConferenceModel(rs);
                     conferenceModels.add(tcm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return conferenceModels;
     }
 
@@ -439,28 +401,24 @@ public class SeasonSQLController extends SQLBase {
             query += " and td.team_conf_no_in = ?";
         }
         query += " ORDER BY team_div_name_vc";
-
         ArrayList divisionModels = new ArrayList();
-
         try {
-            Object[] args = null;
+            Object[] args;
             if (conferenceId > 0) {
                 args = new Object[]{new Integer(sportType), new Integer(conferenceId)};
             } else {
                 args = new Object[]{new Integer(sportType)};
             }
-            this.executeQuery(query, args);
-
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next()) {
-                    TeamDivisionModel tcm = this.loadTeamDivisionModel(rs);
+                    TeamDivisionModel tcm = SeasonSQLController.loadTeamDivisionModel(rs);
                     divisionModels.add(tcm);
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
-
         return divisionModels;
     }
 
@@ -469,59 +427,52 @@ public class SeasonSQLController extends SQLBase {
                 + " WHERE game_start_dt < ?"
                 + " AND (default_picks_si IS NULL OR default_picks_si <= 0)"
                 + " ORDER BY game_start_dt, game_no_in";
-
         ArrayList gameModels = new ArrayList();
-
         try {
             Object[] args = new Object[]{new java.util.Date()};
-            this.executeQuery(query, args);
-
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next()) {
-                    gameModels.add(this.loadGameModel(rs));
+                    gameModels.add(SeasonSQLController.loadGameModel(rs));
                 }
             }
-            return gameModels;
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return gameModels;
     }
 
     public void setGameDefaultStatus(int gameId, int status) throws ProcessException {
         String query = "UPDATE game_tbl set default_picks_si = ? WHERE game_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{new Integer(status), new Integer(gameId)});
+        executeUpdate(query, new Object[]{new Integer(status), new Integer(gameId)});
     }
 
     public void setSeriesCleanupStatus(int seriesId, int status) throws ProcessException {
         String query = "UPDATE season_series_tbl SET series_cleanup_si = ?"
                 + " WHERE series_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{new Integer(status), new Integer(seriesId)});
+        executeUpdate(query, new Object[]{new Integer(status), new Integer(seriesId)});
     }
 
     public void setSeriesReminderStatus(int seriesId, int status) throws ProcessException {
         String query = "UPDATE season_series_tbl SET series_reminder_si = ?"
                 + " WHERE series_no_in = ?";
-
-        this.executeUpdate(query, new Object[]{new Integer(status), new Integer(seriesId)});
+        executeUpdate(query, new Object[]{new Integer(status), new Integer(seriesId)});
     }
 
     public boolean allSeriesGamesStarted(int seriesId) throws ProcessException {
         String query = "SELECT COUNT(*) FROM game_tbl"
                 + " WHERE series_no_in = ?"
                 + " AND game_start_dt > ?";
-
+        boolean allGamesStarted = false;
         try {
-            this.executeQuery(query, new Object[]{new Integer(seriesId), new java.util.Date()});
+            executeQuery(query, new Object[]{new Integer(seriesId), new java.util.Date()});
             if (rs != null && rs.next()) {
-                return (rs.getInt(1) <= 0);
-            } else {
-                return false;
+                allGamesStarted = (rs.getInt(1) <= 0);
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return allGamesStarted;
     }
 
     public GameModel findGameByTeams(int seriesId, int homeTeamId, int awayTeamId) throws ProcessException {
@@ -529,21 +480,19 @@ public class SeasonSQLController extends SQLBase {
                 + " WHERE series_no_in = ?"
                 + " AND away_team_in = ?"
                 + " AND home_team_in = ?";
+        GameModel gm = null;
         try {
-            GameModel gm = null;
-
             Object[] args = new Object[]{new Integer(seriesId),
                 new Integer(awayTeamId),
                 new Integer(homeTeamId)};
-            this.executeQuery(query, args);
+            executeQuery(query, args);
             if (rs != null && rs.next()) {
-                gm = this.loadGameModel(rs);
+                gm = SeasonSQLController.loadGameModel(rs);
             }
-
-            return gm;
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
+        return gm;
     }
 
     public Collection findGamesInProgress(int sportType) throws ProcessException {
@@ -558,23 +507,25 @@ public class SeasonSQLController extends SQLBase {
                     + " AND s.season_active_si = 1"
                     + " AND g.game_posted_si = 0"
                     + " AND s.sport_type_si = ?"
-                    + " AND g.game_start_dt <= ?"
-                    + " ORDER BY g.game_start_dt";
-            Object[] args = new Object[]{new Integer(sportType), new java.util.Date()};
-            this.executeQuery(query, args);
-
+                    + " AND g.game_start_dt < ?"
+                    + " ORDER BY g.game_start_dt ASC";
+            Object[] args = new Object[]{
+                new Integer(sportType),
+                new java.util.Date()
+            };
+            executeQuery(query, args);
             if (rs != null) {
                 while (rs.next()) {
-                    gameModels.add(this.loadGameModel(rs));
+                    gameModels.add(SeasonSQLController.loadGameModel(rs));
                 }
             }
-        } catch (java.sql.SQLException sqle) {
+        } catch (SQLException sqle) {
             throw new ProcessException(sqle);
         }
         return gameModels;
     }
 
-    public static GameModel loadGameModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static GameModel loadGameModel(java.sql.ResultSet rs) throws SQLException {
         GameModel gm = new GameModel();
         gm.setId(rs.getInt("game_no_in"));
         gm.setSeriesId(rs.getInt("series_no_in"));
@@ -591,7 +542,7 @@ public class SeasonSQLController extends SQLBase {
         return gm;
     }
 
-    public static TeamModel loadTeamModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static TeamModel loadTeamModel(java.sql.ResultSet rs) throws SQLException {
         TeamModel tm = new TeamModel();
         tm.setId(rs.getInt("team_no_in"));
         tm.setCity(rs.getString("team_city_vc"));
@@ -604,7 +555,7 @@ public class SeasonSQLController extends SQLBase {
         return tm;
     }
 
-    public static SeasonSeriesModel loadSeasonSeriesModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static SeasonSeriesModel loadSeasonSeriesModel(java.sql.ResultSet rs) throws SQLException {
         SeasonSeriesModel sm = new SeasonSeriesModel();
         sm.setId(rs.getInt("series_no_in"));
         sm.setSeasonId(rs.getInt("season_no_in"));
@@ -617,7 +568,7 @@ public class SeasonSQLController extends SQLBase {
         return sm;
     }
 
-    public static SeasonModel loadSeasonModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static SeasonModel loadSeasonModel(java.sql.ResultSet rs) throws SQLException {
         SeasonModel sm = new SeasonModel();
         sm.setId(rs.getInt("season_no_in"));
         sm.setName(rs.getString("season_name_vc"));
@@ -627,7 +578,7 @@ public class SeasonSQLController extends SQLBase {
         return sm;
     }
 
-    public static TeamDivisionModel loadTeamDivisionModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static TeamDivisionModel loadTeamDivisionModel(java.sql.ResultSet rs) throws SQLException {
         TeamDivisionModel tdm = new TeamDivisionModel();
         tdm.setId(rs.getInt("team_div_no_in"));
         tdm.setName(rs.getString("team_div_name_vc"));
@@ -635,7 +586,7 @@ public class SeasonSQLController extends SQLBase {
         return tdm;
     }
 
-    public static TeamConferenceModel loadTeamConferenceModel(java.sql.ResultSet rs) throws java.sql.SQLException {
+    public static TeamConferenceModel loadTeamConferenceModel(java.sql.ResultSet rs) throws SQLException {
         TeamConferenceModel tcm = new TeamConferenceModel();
         tcm.setId(rs.getInt("team_conf_no_in"));
         tcm.setName(rs.getString("team_conf_name_vc"));

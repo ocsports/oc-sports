@@ -3,15 +3,16 @@
 <%@ page import="com.ocsports.sql.DraftSQLController" %>
 <%
     Collection draftPicks = null;
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
+    DraftSQLController draftSqlCtrlr = null;
     try {
+        draftSqlCtrlr = new DraftSQLController();
         draftPicks = draftSqlCtrlr.getDraftPicks(0, 0);
     }
     catch(Exception e) {
-        throw e;
+        //
     }
     finally {
-        draftSqlCtrlr.closeConnection();
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
     }
     if( draftPicks != null && draftPicks.size() > 0 ) {
         String pickLine = "";

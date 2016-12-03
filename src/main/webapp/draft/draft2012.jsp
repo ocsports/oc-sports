@@ -28,12 +28,28 @@
     String currTeamName = "";
     Date lastUpdate = new java.util.Date();
 
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
-    Collection allPlayers = draftSqlCtrlr.getPlayers(1);
-    Collection picks = draftSqlCtrlr.getDraftPicks(0, 0);
-    Collection chat = draftSqlCtrlr.getChat();
-    Collection teams = draftSqlCtrlr.getTeams();
-    int lastChat = draftSqlCtrlr.getLastChat();
+    Collection allPlayers = null;
+    Collection picks = null;
+    Collection chat = null;
+    Collection teams = null;
+    int lastChat = -1;
+
+    DraftSQLController draftSqlCtrlr = null;
+    try {
+        draftSqlCtrlr = new DraftSQLController();
+
+        allPlayers = draftSqlCtrlr.getPlayers(1);
+        picks = draftSqlCtrlr.getDraftPicks(0, 0);
+        chat = draftSqlCtrlr.getChat();
+        teams = draftSqlCtrlr.getTeams();
+        lastChat = draftSqlCtrlr.getLastChat();
+    }
+    catch (Exception e) {
+        //
+    }
+    finally {
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
+    }
 
     iter = picks.iterator();
     while( iter.hasNext() ) {
@@ -47,12 +63,11 @@
     }
 
     if( rosterTeam == "" ) rosterTeam = (String)((ArrayList)teams).get(0);
-
-	session.setAttribute("playerPos", playerPos);
-	session.setAttribute("playerTeam", playerTeam);
-	session.setAttribute("playerName", playerName);
-	session.setAttribute("hideSelected", hideSelected);
-	session.setAttribute("rosterTeam", rosterTeam);
+    session.setAttribute("playerPos", playerPos);
+    session.setAttribute("playerTeam", playerTeam);
+    session.setAttribute("playerName", playerName);
+    session.setAttribute("hideSelected", hideSelected);
+    session.setAttribute("rosterTeam", rosterTeam);
 %>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>

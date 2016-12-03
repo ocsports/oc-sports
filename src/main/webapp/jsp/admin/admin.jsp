@@ -1,3 +1,5 @@
+<%@page import="com.ocsports.core.PropList"%>
+<%@page import="com.ocsports.core.PropertiesHelper"%>
 <%@page import="com.ocsports.servlets.TimerServlet"%>
 <%@ page contentType="text/html"%>
 <%@ page import="java.util.*,java.text.*" %>
@@ -6,25 +8,25 @@
 <%
     String loginAttr = (String)session.getAttribute( AdminServlet.LOGIN_SESSION_ATTR );
     String detailPage = (String)request.getAttribute( AdminServlet.DETAIL_PAGE_ATTR );
-    String loginId = (String)request.getAttribute( "loginId" );
+    String loginId = (String)request.getAttribute("loginId");
     Collection loginErrors = (Collection)request.getAttribute("loginErrors");
     
     boolean loggedIn = ( loginAttr != null && loginAttr.length() > 0 );
     if( loginId == null ) loginId = "";
     
-    String loginURL = response.encodeURL( AdminServlet.ALIAS + "?r=login" );
-    String logoutURL = response.encodeURL( AdminServlet.ALIAS + "?r=logout" );
-    String seasonsURL = response.encodeURL( AdminServlet.ALIAS + "?r=seasons" );
-    String playersURL = response.encodeURL( AdminServlet.ALIAS + "?r=players" );
-    String noticesURL = response.encodeURL( AdminServlet.ALIAS + "?r=systemNotices" );
-    String teamsURL = response.encodeURL( AdminServlet.ALIAS + "?r=teams" );
-    String timerURL = response.encodeURL( TimerServlet.ALIAS + "?r=timerStatus" );
-    String htmlURL = response.encodeURL( AdminServlet.ALIAS + "?r=viewHtml" );
-    String auditLoginsURL = response.encodeURL( AdminServlet.ALIAS + "?r=auditLogin" );
-    String sqlURL = response.encodeURL( AdminServlet.ALIAS + "?r=executeSQL" );
-    String emailURL = response.encodeURL( AdminServlet.ALIAS + "?r=email" );
-    String forumsURL = response.encodeURL( AdminServlet.ALIAS + "?r=forums" );
-    String websiteURL = response.encodeURL( UserServlet.ALIAS + "?r=beginLogin" );
+    String loginURL = response.encodeURL("goAdmin?r=login");
+    String logoutURL = response.encodeURL("goAdmin?r=logout");
+    String seasonsURL = response.encodeURL("goAdmin?r=seasons");
+    String playersURL = response.encodeURL("goAdmin?r=players");
+    String noticesURL = response.encodeURL("goAdmin?r=systemNotices");
+    String teamsURL = response.encodeURL("goAdmin?r=teams");
+    String timerURL = response.encodeURL("goTimer?r=timerStatus");
+    String htmlURL = response.encodeURL("goAdmin?r=viewHtml");
+    String auditLoginsURL = response.encodeURL("goAdmin?r=auditLogin");
+    String sqlURL = response.encodeURL("goAdmin?r=executeSQL");
+    String emailURL = response.encodeURL("goAdmin?r=email");
+    String forumsURL = response.encodeURL("goAdmin?r=forums");
+    String websiteURL = response.encodeURL("goUser?r=beginLogin");
 %>
 <!DOCTYPE HTML>
 <html>

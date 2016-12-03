@@ -1,170 +1,170 @@
-/*
- * Title         CheckNFLScoresTask.java
- * Created       September 26, 2006
- * Author        Paul Charlton
- * Modified      7/30/2009 - moved to package com.ocsports.timer;
- */
 package com.ocsports.timer;
 
-import java.util.*;
-import org.apache.log4j.Logger;
+import com.ocsports.core.MyEmailer;
+import com.ocsports.core.MyHTTPClient;
+import com.ocsports.core.ProcessException;
+import com.ocsports.core.PropList;
+import com.ocsports.core.PropertiesHelper;
+import com.ocsports.core.SportTypes;
+import com.ocsports.models.GameModel;
+import com.ocsports.models.TeamModel;
+import com.ocsports.sql.PoolSQLController;
+import com.ocsports.sql.SeasonSQLController;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Iterator;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
-import com.ocsports.core.*;
-import com.ocsports.sql.*;
-import com.ocsports.models.*;
-import com.ocsports.servlets.TimerServlet;
+public class CheckNFLScoresTask extends TimerTask {
 
-public class CheckNFLScoresTask extends TimerTask implements ITimerTask {
-    private static final String URL = "http://scores.espn.go.com/nfl/scoreboard";
-    private static final String CLASS_NAME = CheckNFLScoresTask.class.getName();
-    private static final Logger log = Logger.getLogger( CLASS_NAME );
+    private final String url = "http://www.nfl.com/liveupdate/scorestrip/scorestrip.json";
+    private SeasonSQLController seasonSql = null;
+    private PoolSQLController poolSql = null;
 
-    private SeasonSQLController   seasonSQL = null;
-    private PoolSQLController     poolSQL = null;
-    private TeamModel             homeTeam;
-    private TeamModel             awayTeam;
-    private GameModel             gameModel;
-
+    /**
+     * execute the task and do not let exceptions leak as they will destroy the
+     * timer object
+     */
     public void run() {
-        this.run(false);
-    }
-
-    public void run(boolean ignoreTimes) {
         try {
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(new java.util.Date());
-            int currentHour = cal.get(Calendar.HOUR_OF_DAY);
-            int weekday = cal.get(Calendar.DAY_OF_WEEK);
-            cal = null;
+            seasonSql = new SeasonSQLController();
+            poolSql = new PoolSQLController();
 
-            //Check the time, only run this task if between 12:00PM and 10:00PM
-            if(ignoreTimes || (currentHour >= 12 && currentHour <= 22)) {
-                getScores();
-                addTaskMessage(CLASS_NAME + " completed.");
+            Collection gamesInProgress = seasonSql.findGamesInProgress(SportTypes.TYPE_NFL_FOOTBALL);
+            if (gamesInProgress != null && !gamesInProgress.isEmpty()) {
+                addTaskMessage(gamesInProgress.size() + " games in progress");
+                postScores(gamesInProgress);
+            }
+            timerTaskCompleted();
+        } catch (ProcessException pe) {
+            timerTaskFailed(pe);
+        } catch (Throwable t) {
+            timerTaskFailed(t);
+        } finally {
+            if (seasonSql != null) {
+                seasonSql.closeConnection();
+            }
+            if (poolSql != null) {
+                poolSql.closeConnection();
             }
         }
-        catch(ProcessException pe) {
-            addTaskMessage("Task failed: " + pe.getExceptionTypeClass().getName() + "-" + pe.getMessage());
-        }
-        catch(Throwable t) {
-            addTaskMessage("Task failed: Throwable caught: " + t.getMessage());
-        }
     }
 
-    private void addTaskMessage(String msg) {
-        log.debug(msg);
-        TimerServlet.timerMessages.add(new TimerMessageModel(TimerServlet.TIMER_INFO, CLASS_NAME, msg));
-    }
+    /**
+     * retrieve external json data and parse each game, searching for games
+     * which have completed since the last iteration; if found, post scores and
+     * update the game record
+     *
+     * @param gamesInProgress the collection of GameModels which are currently
+     * in progress
+     * @throws ProcessException
+     */
+    private void postScores(Collection gamesInProgress) throws ProcessException {
+        String pageSource = MyHTTPClient.getURL(url);
+        if (pageSource == null || pageSource.length() == 0) {
+            throw new ProcessException("Unable to retrieve web page (" + url + ")");
+        }
+        // some array elements are missing a value, replace with empty string
+        String properJson = pageSource.replaceAll(",,", ",\"\",");
+        JSONObject jsonRoot;
 
-    private void getScores() throws ProcessException {
         try {
-            seasonSQL = new SeasonSQLController();
-            poolSQL = new PoolSQLController();
+            JSONParser parser = new JSONParser();
+            jsonRoot = (JSONObject) parser.parse(properJson);
+        } catch (org.json.simple.parser.ParseException ex) {
+            throw new ProcessException("unable to parse json: " + ex.getMessage());
+        }
+        JSONArray jsonGames = (JSONArray) jsonRoot.get("ss");
+        if (jsonGames == null || jsonGames.isEmpty()) {
+            throw new ProcessException("no current games found in json");
+        }
 
-            Collection gamesInProgress = seasonSQL.findGamesInProgress( SportTypes.TYPE_NFL_FOOTBALL );
-            if(gamesInProgress == null || gamesInProgress.size() <= 0) return;
-            addTaskMessage(gamesInProgress.size() + " games in progress...");
+        // loop through each current game
+        Iterator it = jsonGames.iterator();
+        while (it.hasNext()) {
+            JSONArray gameData = (JSONArray) it.next();
 
-            String pageSource = MyHTTPClient.getURL(URL);
-            if(pageSource == null || pageSource.length() == 0) {
-                throw new ProcessException("Unable to retrieve web page (" + URL + ")");
+            String gameStatus = (String) gameData.get(2);
+            if (gameStatus.toUpperCase().indexOf("FINAL") == -1
+                    && gameStatus.toUpperCase().indexOf("F/") == -1) {
+                continue;
             }
 
-            String[] lines = pageSource.split("class=\"teamTop_inGame\"");
-            for(int i=0, len=lines.length; i < len; i++) {
-                if(lines[i].indexOf("<tr class=\"interior-odd\">") > 0) {
-                    awayTeam = null;
-                    homeTeam = null;
-                    gameModel = null;
+            String awayAbrv;
+            int awayScore;
+            String homeAbrv;
+            int homeScore;
+            try {
+                awayAbrv = (String) gameData.get(4);
+                awayScore = Integer.parseInt((String) gameData.get(5));
+                homeAbrv = (String) gameData.get(6);
+                homeScore = Integer.parseInt((String) gameData.get(7));
+            } catch (NumberFormatException ex) {
+                addTaskMessage("unable to parse final game scores: " + ex.getMessage());
+                continue;
+            }
 
-                    if( !parseTeams(lines[i+3]) ) {
-                        continue;
+            TeamModel awayTeam = seasonSql.findTeam(null, null, awayAbrv);
+            TeamModel homeTeam = seasonSql.findTeam(null, null, homeAbrv);
+            if (awayTeam == null || homeTeam == null) {
+                addTaskMessage("unable to identify team(s) for game " + awayAbrv + " at " + homeAbrv);
+                continue;
+            }
+
+            Iterator iter = gamesInProgress.iterator();
+            while (iter.hasNext()) {
+                GameModel gm = (GameModel) iter.next();
+                if (gm.getHomeTeamId() == homeTeam.getId() && gm.getAwayTeamId() == awayTeam.getId()) {
+                    gm.setHomeScore(homeScore);
+                    gm.setAwayScore(awayScore);
+                    gm.setPosted(true);
+                    addTaskMessage("Posting score for game " + gm.getId() + ": " + awayTeam.getAbrv() + " @ " + homeTeam.getAbrv() + "," + gm.getAwayScore() + "-" + gm.getHomeScore());
+                    try {
+                        seasonSql.updateGame(gm);
+                        poolSql.postGame(gm);
+                        sendGamePostedEmail(gm, awayTeam, homeTeam);
+                    } catch (ProcessException pe2) {
+                        addTaskMessage("failed to post score for game " + gm.getId() + ": " + pe2.getMessage());
                     }
-                    else if( !parseScores(lines[i+4]) ) {
-                        continue;
-                    }
-                    else {
-                        Iterator iter = gamesInProgress.iterator();
-                        while(iter.hasNext()) {
-                            GameModel gm = (GameModel)iter.next();
-                            if(gm.getHomeTeamId() == gameModel.getHomeTeamId() && gm.getAwayTeamId() == gameModel.getAwayTeamId()) {
-                                gm.setHomeScore(gameModel.getHomeScore());
-                                gm.setAwayScore(gameModel.getAwayScore());
-                                gm.setPosted(true);
-                                addTaskMessage("Posting score for game " + gm.getId() + ": " + awayTeam.getAbrv() + " @ " + homeTeam.getAbrv() + "," + gameModel.getAwayScore() + "-" + gameModel.getHomeScore());
-                                try {
-                                    seasonSQL.updateGame(gm);
-                                    poolSQL.postGame(gm);
-                                }
-                                catch(ProcessException pe2) {
-                                    addTaskMessage("failed to post score for game " + gm.getId() + ": " + pe2.getMessage());
-                                }
-                                break;
-                            }
-                        }
-                    }
+                    break;
                 }
             }
         }
-        catch(ProcessException pe) {
-            throw pe;
-        }
-        finally {
-            if(seasonSQL != null) seasonSQL.closeConnection();
-            if(poolSQL != null) poolSQL.closeConnection();
-        }
     }
 
-    private boolean parseTeams(String data) {
-        try {
-            String search1 = "<td class=\"interior-team-content\">";
-            String search2 = "<br />";
-            int pos = data.indexOf(search1);
-            int pos2 = data.indexOf(search2, pos + search1.length());
-            if(pos == -1) return false;
+    /**
+     * send an email to the site administrators informing that a game score was
+     * posted
+     *
+     * @param gm the game record just posted
+     * @param awayTeam away team information
+     * @param homeTeam home team information
+     * @return boolean if the email was sent successfully
+     */
+    private boolean sendGamePostedEmail(GameModel gm, TeamModel awayTeam, TeamModel homeTeam) {
+        String[] TOs = PropertiesHelper.getProperty(PropList.ADMIN_POST_SCORES_EMAIL).split(",");
 
-            String sAwayTeam = data.substring(pos + search1.length(), pos + search1.length() + 3);
-            sAwayTeam = sAwayTeam.trim();
+        SimpleDateFormat fmt = new SimpleDateFormat();
+        fmt.applyPattern("h:mm a");
+        String currTime = fmt.format(new java.util.Date());
 
-            String sHomeTeam = data.substring(pos2 + search2.length(), pos2 + search2.length() + 3);
-            sHomeTeam = sHomeTeam.trim();
-
-            awayTeam = seasonSQL.findTeam(null, null, sAwayTeam);
-            homeTeam = seasonSQL.findTeam(null, null, sHomeTeam);
-            //addTaskMessage("Teams: A=" + awayTeam.getId() + ", H=" + homeTeam.getId());
+        String msgSubject = "Game score posted for: " + awayTeam.getAbrv() + " at " + homeTeam.getAbrv();
+        String msgScore;
+        if (gm.getHomeScore() > gm.getAwayScore()) {
+            msgScore = homeTeam.getAbrv() + " " + gm.getHomeScore() + " - " + awayTeam.getAbrv() + " " + gm.getAwayScore();
+        } else {
+            msgScore = awayTeam.getAbrv() + " " + gm.getAwayScore() + " - " + homeTeam.getAbrv() + " " + gm.getHomeScore();
         }
-        catch(Exception e) {
-            addTaskMessage("parseTeams Failed: " + e.getMessage());
-        }
-        return (awayTeam != null && homeTeam != null);
-    }
-    
-    private boolean parseScores(String data) {
-        try {
-            String search1 = "<font class=\"status-final\">";
-            String search2 = "<font class=\"status-final\">";
-            int pos = data.indexOf(search1);
-            int pos2 = data.indexOf(search2, pos + search1.length());
-            if(pos == -1) return false;
+        String msgHeader = "Final score: ";
+        String msgFooter = "\n\n" + "NFL game score has been automatically posted at " + currTime + ".";
 
-            String sAwayScore = data.substring(pos + search1.length(), pos + search1.length() + 2);
-            sAwayScore = sAwayScore.replaceAll("<", "");
-            int awayScore = Integer.parseInt(sAwayScore);
+        StringBuffer msgBody = new StringBuffer();
+        msgBody.append(msgHeader);
+        msgBody.append(msgScore);
+        msgBody.append(msgFooter);
 
-            String sHomeScore = data.substring(pos2 + search2.length(), pos2 + search2.length() + 2);
-            sHomeScore = sHomeScore.replaceAll("<", "");
-            int homeScore = Integer.parseInt(sHomeScore);
-
-            gameModel = new GameModel();
-            gameModel.setHomeTeamId( homeTeam.getId() );
-            gameModel.setHomeScore( homeScore );
-            gameModel.setAwayTeamId( awayTeam.getId() );
-            gameModel.setAwayScore( awayScore );
-            //addTaskMessage("Scores: A=" + gameModel.getAwayScore() + ", H=" + gameModel.getHomeScore());
-        }
-        catch(Exception e) {
-            addTaskMessage("parseScores Failed: " + e.getMessage());
-        }
-        return (gameModel != null);
+        return MyEmailer.sendEmailMsg(TOs, null, null, msgSubject, msgBody.toString(), null);
     }
 }

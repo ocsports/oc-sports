@@ -5,8 +5,9 @@
 <%@ page import="com.ocsports.sql.DraftSQLController" %>
 <%
     int currPick = 0;
-    DraftSQLController draftSqlCtrlr = new DraftSQLController();
+    DraftSQLController draftSqlCtrlr = null;
     try {
+        draftSqlCtrlr = new DraftSQLController();
         Collection picks = draftSqlCtrlr.getDraftPicks(0, 0);
         Iterator iter = picks.iterator();
         while( iter.hasNext() ) {
@@ -18,10 +19,9 @@
         }
     }
     catch(Exception e) {
-        throw e;
     }
     finally {
-        draftSqlCtrlr.closeConnection();
+        if (draftSqlCtrlr != null) draftSqlCtrlr.closeConnection();
     }
     out.print(currPick);
 %>

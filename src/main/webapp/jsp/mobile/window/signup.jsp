@@ -10,8 +10,18 @@
     UserModel um = (UserModel)request.getAttribute("UserModel");
     if(um == null) um = new UserModel();
     
-    SeasonSQLController seasonSql = new SeasonSQLController();
-    HashMap teams = seasonSql.getTeamMap( SportTypes.TYPE_NFL_FOOTBALL );
+    HashMap teams = null;
+    SeasonSQLController seasonSql = null;
+    try {
+        seasonSql = new SeasonSQLController();
+        teams = seasonSql.getTeamMap( SportTypes.TYPE_NFL_FOOTBALL );
+        if(teams != null) request.setAttribute("teamMap", teams);
+    }
+    catch(Exception ex) {
+    }
+    finally {
+        if (seasonSql != null) seasonSql.closeConnection();
+    }
 %>
 <jsp:include page="/jsp/mobile/window/page_header.jsp" />
 

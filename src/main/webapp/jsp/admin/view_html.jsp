@@ -6,7 +6,7 @@
     String url = (String)request.getAttribute("url");
     String source = (String)request.getAttribute("source");
 
-    String formURL = response.encodeURL(AdminServlet.ALIAS + "?r=viewHtml");
+    String formURL = response.encodeURL("goAdmin?r=viewHtml");
 %>
 
 <form name='frmHTML' action='<%=formURL%>' method='POST'>

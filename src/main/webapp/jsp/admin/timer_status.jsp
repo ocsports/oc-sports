@@ -51,15 +51,11 @@
     if(messages != null && !messages.isEmpty()) {
         String trClass = "";
         String trStyle = "";
-        int counter = 0;
-		SimpleDateFormat fmt = new SimpleDateFormat("h:mm a");
-		TimerMessageModel tmm = null;
-
+        SimpleDateFormat fmt = new SimpleDateFormat("h:mm a");
         for(int i = messages.size(); i > 0; i--) {
-			if( i > 50 ) break;
-            tmm = (TimerMessageModel)messages.get(i-1);
-			trClass = (trClass.equals("row1") ? "row2" : "row1");
-            trStyle = (tmm.getSubject().equals("ERROR") ? "color:red;" : "");
+            TimerMessageModel tmm = (TimerMessageModel)messages.get(i-1);
+            trClass = (trClass.equals("row1") ? "row2" : "row1");
+            trStyle = (tmm.getSubject().equals(TimerServlet.MSG_TYPE_ERROR) ? "color:red;" : "");
 %>
             <tr class="<%=trClass%>" style="<%=trStyle%>">
                 <td style="white-space: nowrap"><%=fmt.format(tmm.getTimestamp())%></td>
