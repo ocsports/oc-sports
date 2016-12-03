@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 public abstract class TimerTask extends java.util.TimerTask {
 
-    private Logger log = Logger.getLogger(this.getClass().getName());
+    protected final Logger log = Logger.getLogger(getClass().getName());
 
     /**
      * add a general information message to the timer message queue
@@ -25,9 +25,15 @@ public abstract class TimerTask extends java.util.TimerTask {
      */
     protected void addTaskMessage(String msgType, String msg) {
         if (log != null) {
-            log.debug(msg);
+            String className = getClass().getName();
+            className = className.substring(className.lastIndexOf(".") + 1);
+            if (msgType.equals(TimerServlet.MSG_TYPE_ERROR)) {
+                log.error(className + " - " + msg);
+            } else {
+                log.info(className + " - " + msg);
+            }
         }
-        TimerServlet.addMessageToQueue(new TimerMessageModel(msgType, this.getClass().getName(), msg));
+        TimerServlet.addMessageToQueue(new TimerMessageModel(msgType, getClass().getName(), msg));
     }
 
     /**
