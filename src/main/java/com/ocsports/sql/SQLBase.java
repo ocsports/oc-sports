@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 
 public abstract class SQLBase {
 
-    private static final int CONN_COUNT_LOG_THRESHOLD = 4;
+    private static final int CONN_COUNT_LOG_THRESHOLD = 10;
 
     private static DataSource datasource = null;
     private static int connCount = 0;

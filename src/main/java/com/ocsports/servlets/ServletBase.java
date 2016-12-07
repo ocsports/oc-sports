@@ -77,6 +77,8 @@ public abstract class ServletBase extends HttpServlet {
             } catch (InvocationTargetException ex) {
                 defaultAction(request, response, session);
             }
+        } catch (NullPointerException npe) {
+            handleException(request, response, session, npe);
         } catch (ProcessException pe) {
             handleException(request, response, session, pe);
         } catch (IllegalAccessException e) {
@@ -84,6 +86,8 @@ public abstract class ServletBase extends HttpServlet {
         } catch (IllegalArgumentException e) {
             handleException(request, response, session, e);
         } catch (SecurityException e) {
+            handleException(request, response, session, e);
+        } catch (Exception e) {
             handleException(request, response, session, e);
         }
     }
