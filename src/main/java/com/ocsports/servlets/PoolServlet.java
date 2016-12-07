@@ -42,9 +42,12 @@ public class PoolServlet extends ServletBase {
 
             LeagueModel lm = (LeagueModel) session.getAttribute("LeagueModel");
             UserModel um = (UserModel) session.getAttribute("UserModel");
+            if (lm == null || um == null) {
+                sendRedirect("goUser", request, response, session);
+                return;
+            }
 
-            int seriesId = -1;
-
+            int seriesId;
             String s = request.getParameter("seriesId");
             if (s != null && !s.equals("")) {
                 seriesId = Integer.parseInt(s);
@@ -77,10 +80,9 @@ public class PoolServlet extends ServletBase {
             Collection allUserSeries = sqlCtrlr.getUserSeries(um.getUserId());
             request.setAttribute("allUserSeries", allUserSeries);
 
-            UserSeriesXrefModel usm = null;
             Iterator iter = allUserSeries.iterator();
             while (iter.hasNext()) {
-                usm = (UserSeriesXrefModel) iter.next();
+                UserSeriesXrefModel usm = (UserSeriesXrefModel) iter.next();
                 if (usm.getSeriesId() == seriesId) {
                     request.setAttribute("UserSeriesXrefModel", usm);
                 }
@@ -112,6 +114,10 @@ public class PoolServlet extends ServletBase {
             userSql = new UserSQLController();
 
             LeagueModel lm = (LeagueModel) session.getAttribute("LeagueModel");
+            if (lm == null) {
+                sendRedirect("goUser", request, response, session);
+                return;
+            }
 
             SeasonModel sm = seasonSql.getSeasonModel(lm.getSeasonId());
 
@@ -341,10 +347,9 @@ public class PoolServlet extends ServletBase {
 
             long currentTime = new java.util.Date().getTime();
 
-            GameModel gm = null;
             UserGameXrefModel ugm = null;
             for (int k = 0, lenK = gameIds.length; k < lenK; k++) {
-                gm = seasonSql.getGameModel(gameIds[k]);
+                GameModel gm = seasonSql.getGameModel(gameIds[k]);
                 if (picks[k] >= 0 && gm.getStartDate() > currentTime) {
                     sqlCtrlr.removeUserGameXref(gameIds[k], um.getUserId());
                     sqlCtrlr.createUserGameXref(gameIds[k], um.getUserId(), picks[k], 0);
@@ -390,8 +395,8 @@ public class PoolServlet extends ServletBase {
             UserSeriesXrefModel usm = poolSql.getUserSeriesXrefModel(seriesId, um.getUserId());
 
             StringBuffer msg = new StringBuffer();
-            msg.append(um.getFullName() + ",\n");
-            msg.append("   Here are your picks for " + sm.getSeriesPrefix() + " " + ssm.getSequence());
+            msg.append(um.getFullName()).append(",\n");
+            msg.append("   Here are your picks for ").append(sm.getSeriesPrefix()).append(" ").append(ssm.getSequence());
             msg.append("\n\n");
 
             if (games != null && !games.isEmpty()) {
@@ -421,8 +426,8 @@ public class PoolServlet extends ServletBase {
                     if (sPick.length() == 0) {
                         sPick = "<not selected>";
                     }
-                    msg.append(sGame + "(" + sSpread + ")");
-                    msg.append(" - " + sPick);
+                    msg.append(sGame).append("(").append(sSpread).append(")");
+                    msg.append(" - ").append(sPick);
                     msg.append("\n");
                 }
                 if (defaultPicksMade) {
@@ -434,7 +439,7 @@ public class PoolServlet extends ServletBase {
             msg.append("LOCK: ");
             if (usm != null && usm.getLock() > 0) {
                 TeamModel lockTeam = (TeamModel) teamMap.get(String.valueOf(usm.getLock()));
-                msg.append(lockTeam.getCity() + " " + lockTeam.getName());
+                msg.append(lockTeam.getCity()).append(" ").append(lockTeam.getName());
             } else {
                 msg.append("<not selected>");
             }
@@ -443,7 +448,7 @@ public class PoolServlet extends ServletBase {
             msg.append("SURVIVOR: ");
             if (usm != null && usm.getSurvivor() > 0) {
                 TeamModel survivorTeam = (TeamModel) teamMap.get(String.valueOf(usm.getSurvivor()));
-                msg.append(survivorTeam.getCity() + " " + survivorTeam.getName());
+                msg.append(survivorTeam.getCity()).append(" ").append(survivorTeam.getName());
             } else {
                 msg.append("<not selected>");
             }
@@ -459,8 +464,6 @@ public class PoolServlet extends ServletBase {
             msg.append("administrator@oc-sports.com\n");
             msg.append("www.oc-sports.com\n");
 
-            boolean emailSent = false;
-
             String subject = "OC Sports - Picks Confirmation";
             String[] toRecips = new String[]{um.getEmail()};
             String[] ccRecips = null;
@@ -468,7 +471,6 @@ public class PoolServlet extends ServletBase {
                 ccRecips = new String[]{um.getEmail2()};
             }
             return MyEmailer.sendEmailMsg(toRecips, ccRecips, null, subject, msg.toString(), null);
-            //this.sendRedirect("goPool?r=picks&seriesId=" + seriesId + (!emailSent ? "&emailError=Y" : ""));
         } catch (ProcessException pe) {
             throw pe;
         } finally {

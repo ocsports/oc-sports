@@ -9,6 +9,8 @@ import org.apache.log4j.Logger;
 
 public abstract class SQLBase {
 
+    private static final int CONN_COUNT_LOG_THRESHOLD = 10;
+
     private static DataSource datasource = null;
     private static int connCount = 0;
 
@@ -49,7 +51,7 @@ public abstract class SQLBase {
             }
             if (conn == null || conn.isClosed()) {
                 conn = datasource.getConnection();
-                if (++connCount > 1) {
+                if (++connCount >= CONN_COUNT_LOG_THRESHOLD) {
                     log.info("current open connections(++): " + connCount);
                 }
             }
@@ -73,7 +75,7 @@ public abstract class SQLBase {
                     conn.commit();
                 }
                 conn.close();
-                if (--connCount > 1) {
+                if (--connCount >= CONN_COUNT_LOG_THRESHOLD) {
                     log.info("current open connections(--): " + connCount);
                 }
             }

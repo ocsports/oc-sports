@@ -163,9 +163,9 @@ public class TimerServlet extends ServletBase {
             } catch (ClassNotFoundException cnfe) {
                 addTaskMessage(MSG_TYPE_ERROR, "class type " + taskClass + " not found");
             } catch (IllegalAccessException iax) {
-                addTaskMessage(MSG_TYPE_ERROR, "unknown error " + iax.getMessage());
+                addTaskMessage(MSG_TYPE_ERROR, "illegal access attempting to instantiate class " + taskClass);
             } catch (InstantiationException ix) {
-                addTaskMessage(MSG_TYPE_ERROR, "unknown error " + ix.getMessage());
+                addTaskMessage(MSG_TYPE_ERROR, "unable to instantiate class " + taskClass);
             }
         }
         this.timerStatus(request, response, session);
@@ -180,7 +180,11 @@ public class TimerServlet extends ServletBase {
      */
     private void addTaskMessage(String msgType, String msg) {
         if (log != null) {
-            log.debug(msg);
+            if (msgType.equals(TimerServlet.MSG_TYPE_ERROR)) {
+                log.error(msg);
+            } else {
+                log.info(msg);
+            }
         }
         addMessageToQueue(new TimerMessageModel(msgType, this.getClass().getName(), msg));
     }
@@ -205,7 +209,7 @@ public class TimerServlet extends ServletBase {
             return;
         }
 
-        long delay = 0;
+        long taskCount = 0;
         String taskClass = null;
         int taskPeriod = 0;
         for (int i = 0; i < activeTasks.size(); i++) {
@@ -216,8 +220,10 @@ public class TimerServlet extends ServletBase {
 
                 Class c = Class.forName(taskClass);
                 TimerTask task = (TimerTask) c.newInstance();
-                timer.scheduleAtFixedRate(task, (1000l * 60l * ++delay), (1000l * 60l * taskPeriod));
-                addTaskMessage(MSG_TYPE_INFO, taskClass + " scheduled to run every " + taskPeriod + " minutes");
+                timer.scheduleAtFixedRate(task, (1000l * 10l * ++taskCount), (1000l * 60l * taskPeriod));
+
+                String simpleClassName = taskClass.substring(taskClass.lastIndexOf(".") + 1);
+                addTaskMessage(MSG_TYPE_INFO, simpleClassName + " - scheduled to run every " + taskPeriod + " minutes");
             } catch (ClassNotFoundException cnfe) {
                 addTaskMessage(MSG_TYPE_ERROR, "class type " + taskClass + " not found");
             } catch (NumberFormatException nfe) {
