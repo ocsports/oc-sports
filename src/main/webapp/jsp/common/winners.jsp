@@ -19,10 +19,14 @@
     int currYear = DateHelper.getCurrentYear();
 	for (int i = 0; i < 20; i++) {
 		String yr = String.valueOf(currYear - i);
-        String pw = winnersList.get(yr);
-        String lw = lockWinners.get(yr);
-        String sw = survivorWinners.get(yr);
-        if(pw.length() > 0 || sw.length() > 0 || lw.length() > 0) {
+        String pw = (String)winnersList.get(yr);
+        String lw = (String)lockWinners.get(yr);
+        String sw = (String)survivorWinners.get(yr);
+        if(pw == null) pw = "";
+        if(lw == null) lw = "";
+        if(sw == null) sw = "";
+
+        //if(pw.length() > 0 || sw.length() > 0 || lw.length() > 0) {
             %>
             <table cellspacing="1" cellpadding="15" border="1" class="winner">
                 <tr colspan="2">
@@ -36,7 +40,7 @@
                     </td>
                     <td>
                         <h4>Overall Champion:</h4>
-                        <strong><%=pw%></strong>
+                        <strong><%=(pw == null ? "" : pw)%></strong>
                     </td>
                 </tr>
                 <tr>
@@ -45,7 +49,7 @@
                     </td>
                     <td>
                         <h4>Locks Champion:</h4>
-                        <strong><%=lw%></strong>
+                        <strong><%=(lw == null ? "" : lw)%></strong>
                     </td>
                 </tr>
                 <tr>
@@ -54,12 +58,12 @@
                     </td>
                     <td>
                         <h4>Survivor Champion:</h4>
-                        <strong><%=sw%></strong>
+                        <strong><%=(sw == null ? "" : sw)%></strong>
                     </td>
                 </tr>
             </table>
             <%
-        }
+        //}
     }
     %>
 </div>

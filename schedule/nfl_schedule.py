@@ -4,8 +4,8 @@ import csv
 import datetime
 import os
 
-INPUT_FILE = "nfl_schedule_2017.csv"
-OUTPUT_FILE = "nfl_schedule_2017.sql"
+INPUT_FILE = "./in/nfl_schedule_2017.csv"
+OUTPUT_FILE = "./out/nfl_schedule_2017.sql"
 SEASON_KEY = 14
 LEAGUE_KEY = 14
 FIRST_SERIES_KEY = 225
