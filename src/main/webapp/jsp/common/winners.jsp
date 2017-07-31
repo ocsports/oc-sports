@@ -26,14 +26,10 @@
         if(lw == null) lw = "";
         if(sw == null) sw = "";
 
-        //if(pw.length() > 0 || sw.length() > 0 || lw.length() > 0) {
+        if(pw.length() > 0 || sw.length() > 0 || lw.length() > 0) {
             %>
+            <h2><%=yr%> Winners:</h2>
             <table cellspacing="1" cellpadding="15" border="1" class="winner">
-                <tr colspan="2">
-                    <td>
-                        <h2><%=yr%> Winners:</h2>
-                    </td>
-                </tr>
                 <tr>
                     <td>
                         <img src="<%=request.getContextPath()%>/images/oc-sports/silhouette.jpg" />
@@ -62,8 +58,9 @@
                     </td>
                 </tr>
             </table>
+            <br><br>
             <%
-        //}
+        }
     }
     %>
 </div>
