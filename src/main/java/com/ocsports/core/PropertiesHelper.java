@@ -6,7 +6,7 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 
 /*
- * 
+ *
  * @created    September, 2014
  * @author     Paul Charlton
  */
@@ -46,7 +46,7 @@ public class PropertiesHelper {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return  the league ID for the current default league
 	 */
 	public static int getDefaultLeagueId() {
@@ -54,9 +54,9 @@ public class PropertiesHelper {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return  should the sign up link on the home page be shown
-	 * @throws ProcessException 
+	 * @throws ProcessException
 	 */
 	public static boolean isShowSignup() {
 		String p = getProperty(PropList.SHOW_SIGNUP);
@@ -90,21 +90,21 @@ public class PropertiesHelper {
 		lockWinners = new LinkedHashMap();
 
 		int currYear = DateHelper.getCurrentYear();
-		for (int i = 0; i > -20; i--) {
-			String prop = getProperty(PropList.POOL_WINNER_PREFIX + (currYear - i));
-			if (prop != null && prop.length() > 0) {
-				poolWinners.put(String.valueOf(currYear - i), prop);
-			}
+		for (int i = 0; i < 20; i++) {
+			String yr = String.valueOf(currYear - i);
+			String winners;
 
-			prop = PropertiesHelper.getProperty(PropList.LOCKS_WINNER_PREFIX + (currYear - i));
-			if (prop != null && prop.length() > 0) {
-				lockWinners.put(String.valueOf(currYear - i), prop);
-			}
+			winners = getProperty(PropList.POOL_WINNER_PREFIX + yr);
+			if (winners == null) winners = "";
+			poolWinners.put(yr, winners);
 
-			prop = PropertiesHelper.getProperty(PropList.SURVIVOR_WINNER_PREFIX + (currYear - i));
-			if (prop != null && prop.length() > 0) {
-				survivorWinners.put(String.valueOf(currYear - i), prop);
-			}
+			winners = PropertiesHelper.getProperty(PropList.LOCKS_WINNER_PREFIX + yr);
+			if (winners == null) winners = "";
+			lockWinners.put(yr, winners);
+
+			winners = PropertiesHelper.getProperty(PropList.SURVIVOR_WINNER_PREFIX + yr);
+			if (winners == null) winners = "";
+			survivorWinners.put(yr, winners);
 		}
 	}
 }
