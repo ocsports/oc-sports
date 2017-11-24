@@ -1,87 +1,57 @@
 #!/usr/bin/python
-
 import csv
 import datetime
 import os
 
-INPUT_FILE = "./in/nfl_schedule_2017.csv"
-OUTPUT_FILE = "./out/nfl_schedule_2017.sql"
+# constants to be adjusted for each new season
+INPUT_FILE = "nfl_schedule_2017.csv"
+OUTPUT_FILE = "nfl_schedule_2017.sql"
 SEASON_KEY = 14
 LEAGUE_KEY = 14
 FIRST_SERIES_KEY = 225
 FIRST_GAME_KEY = 3130
 FIRST_SERIES_START = datetime.datetime.strptime("9/6/2017", "%m/%d/%Y")
-
 DATE_IDX = 0
 TIME_IDX = 1
 AWAY_TEAM_IDX = 2
 HOME_TEAM_IDX = 3
 
+# static constants
+ONE_WEEK = datetime.timedelta(days=7)
+ONE_SECOND = datetime.timedelta(seconds=1)
 TEAM_KEYS = {
-    "ARIZONACARDINALS": 1,
-    "ATLANTAFALCONS": 2,
-    "BALTIMORERAVENS": 3,
-    "BUFFALOBILLS": 4,
-    "CAROLINAPANTHERS": 5,
-    "CHICAGOBEARS": 6,
-    "CINCINNATIBENGALS": 7,
-    "CLEVELANDBROWNS": 8,
-    "DALLASCOWBOYS": 9,
-    "DENVERBRONCOS": 10,
-    "DETROITLIONS": 11,
-    "GREENBAYPACKERS": 12,
-    "HOUSTONTEXANS": 13,
-    "INDIANAPOLISCOLTS": 14,
-    "JACKSONVILLEJAGUARS": 15,
-    "KANSASCITYCHIEFS": 16,
-    "MIAMIDOLPHINS": 17,
-    "MINNESOTAVIKINGS": 18,
-    "NEWENGLANDPATRIOTS": 19,
-    "NEWORLEANSSAINTS": 20,
-    "NEWYORKGIANTS": 21,
-    "NEWYORKJETS": 22,
-    "OAKLANDRAIDERS": 23,
-    "PHILADELPHIAEAGLES": 24,
-    "PITTSBURGHSTEELERS": 25,
-    "LOSANGELESCHARGERS": 26,
-    "SANFRANCISCO49ERS": 27,
-    "SEATTLESEAHAWKS": 28,
-    "LOSANGELESRAMS": 29,
-    "TAMPABAYBUCCANEERS": 30,
-    "TENNESSEETITANS": 31,
-    "WASHINGTONREDSKINS": 32,
-    "ARIZONA": 1,
-    "ATLANTA": 2,
-    "BALTIMORE": 3,
-    "BUFFALO": 4,
-    "CAROLINA": 5,
-    "CHICAGO": 6,
-    "CINCINNATI": 7,
-    "CLEVELAND": 8,
-    "DALLAS": 9,
-    "DENVER": 10,
-    "DETROIT": 11,
-    "GREENBAY": 12,
-    "HOUSTON": 13,
-    "INDIANAPOLIS": 14,
-    "JACKSONVILLE": 15,
-    "KANSASCITY": 16,
-    "MIAMI": 17,
-    "MINNESOTA": 18,
-    "NEWENGLAND": 19,
-    "NEWORLEANS": 20,
-    "NYGIANTS": 21,
-    "NYJETS": 22,
-    "OAKLAND": 23,
-    "PHILADELPHIA": 24,
-    "PITTSBURGH": 25,
-    "SANDIEGO": 26,
-    "SANFRANCISCO": 27,
-    "SEATTLE": 28,
-    "LOSANGELES": 29,
-    "TAMPABAY": 30,
-    "TENNESSEE": 31,
-    "WASHINGTON": 32,
+    1: ["ARI", "ARIZONA", "CARDINALS"],
+    2: ["ATL", "ATLANTA", "FALCONS"],
+    3: ["BAL", "BALTIMORE", "RAVENS"],
+    4: ["BUF", "BUFFALO", "BILLS"],
+    5: ["CAR", "CAROLINA", "PANTHERS"],
+    6: ["CHI", "CHICAGO", "BEARS"],
+    7: ["CIN", "CINCINNATI", "BENGALS"],
+    8: ["CLE", "CLEVELAND", "BROWNS"],
+    9: ["DAL", "DALLAS", "COWBOYS"],
+    10: ["DEN", "DENVER", "BRONCOS"],
+    11: ["DET", "DETROIT", "LIONS"],
+    12: ["GB", "GREEN BAY", "PACKERS"],
+    13: ["HOU", "HOUSTON", "TEXANS"],
+    14: ["IND", "INDIANAPOLIS", "COLTS"],
+    15: ["JAX", "JACKSONVILLE", "JAGUARS"],
+    16: ["KC", "KANSAS CITY", "CHIEFS"],
+    17: ["MIA", "MIAMI", "DOLPHINS"],
+    18: ["MIN", "MINNESOTA", "VIKINGS"],
+    19: ["NE", "NEW ENGLAND", "PATRIOTS"],
+    20: ["NO", "NEW ORLEANS", "SAINTS"],
+    21: ["NYG", "NEW YORK", "GIANTS", "NYGIANTS"],
+    22: ["NYJ", "NEW YORK", "JETS", "NYJETS"],
+    23: ["OAK", "OAKLAND", "RAIDERS"],
+    24: ["PHI", "PHILADELPHIA", "EAGLES"],
+    25: ["PIT", "PITTSBURGH", "STEELERS"],
+    26: ["LAC", "LOS ANGELES", "CHARGERS"],
+    27: ["SF", "SAN FRANCISCO", "49ERS"],
+    28: ["SEA", "SEATTLE", "SEAHAWKS"],
+    29: ["LAR", "LOS ANGELES", "RAMS"],
+    30: ["TB", "TAMPA BAY", "BUCCANEERS"],
+    31: ["TEN", "TENNESSEE", "TITANS"],
+    32: ["WAS", "WASHINGTON", "REDSKINS"]
 }
 
 series_key = 0
@@ -90,6 +60,7 @@ series_end = None
 
 
 def main():
+    parse_start = datetime.datetime.now()
     if os.path.exists(OUTPUT_FILE):
         os.remove(OUTPUT_FILE)
 
@@ -130,7 +101,10 @@ def main():
                 game_key = game_key + 1
 
             write_sql("commit;\n")
-            print "complete!"
+
+            parse_end = datetime.datetime.now()
+            ms = int(round((parse_end - parse_start).total_seconds()*1000, 0))
+            print "completed in {}ms!".format(ms)
     except Exception as e:
         print e
 
@@ -163,8 +137,7 @@ def printHeader():
 def populate_series(kickoff):
     for i in range(0, 17, 1):
         start = FIRST_SERIES_START + datetime.timedelta(7 * i)
-        end = start + datetime.timedelta(days=7) - datetime.timedelta(seconds=1)
-        # print "get_series({}, {}, {})".format(kickoff, start, end)
+        end = start + ONE_WEEK - ONE_SECOND
         if kickoff >= start and kickoff <= end:
             global series_key, series_start, series_end
             series_key = FIRST_SERIES_KEY + i
@@ -172,14 +145,19 @@ def populate_series(kickoff):
             series_end = end
             return
 
-    raise Exception("kickoff not within any series range: " + Format(kickoff, "%m/%d/%Y %H:%M"))
+    raise Exception("kickoff not within any series range: {}".format(
+                    Format(kickoff, "%m/%d/%Y %H:%M")))
 
 
 def get_team_id(team_city):
     team_city = team_city.replace(" ", "").upper()
-    # print team_city
-    if TEAM_KEYS.get(team_city):
-        return TEAM_KEYS[team_city]
+    for team_id, team_values in TEAM_KEYS.iteritems():
+        full_name = team_values[1] + team_values[2]
+        if full_name.replace(" ", "").upper() == team_city:
+            return team_id
+        for v in team_values:
+            if v.replace(" ", "").upper() == team_city:
+                return team_id
 
     raise Exception("Invalid team city: " + str(team_city))
 

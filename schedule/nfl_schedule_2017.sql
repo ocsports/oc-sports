@@ -322,4 +322,3 @@ insert into game_tbl(game_no_in, series_no_in, game_start_dt, away_team_in, home
 insert into game_tbl(game_no_in, series_no_in, game_start_dt, away_team_in, home_team_in, game_spread_fl) values(3384, 241, '2017-12-31 13:25:00', 23, 26, 0);
 insert into game_tbl(game_no_in, series_no_in, game_start_dt, away_team_in, home_team_in, game_spread_fl) values(3385, 241, '2017-12-31 13:25:00', 27, 29, 0);
 commit;
-
