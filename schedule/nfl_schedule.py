@@ -60,7 +60,7 @@ series_end = None
 
 
 def main():
-    start = datetime.datetime.now()
+    parse_start = datetime.datetime.now()
     if os.path.exists(OUTPUT_FILE):
         os.remove(OUTPUT_FILE)
 
@@ -102,8 +102,8 @@ def main():
 
             write_sql("commit;\n")
 
-            end = datetime.datetime.now()
-            ms = int(round((end - start).total_seconds()*1000, 0))
+            parse_end = datetime.datetime.now()
+            ms = int(round((parse_end - parse_start).total_seconds()*1000, 0))
             print "completed in {}ms!".format(ms)
     except Exception as e:
         print e
