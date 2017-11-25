@@ -1,13 +1,15 @@
 package com.ocsports.timer;
 
+import java.util.Collection;
+import java.util.Iterator;
 import com.ocsports.core.ProcessException;
 import com.ocsports.core.SportTypes;
+import com.ocsports.models.LeagueModel;
 import com.ocsports.models.SeasonModel;
 import com.ocsports.models.SeasonSeriesModel;
 import com.ocsports.sql.PoolSQLController;
 import com.ocsports.sql.SeasonSQLController;
-import java.util.Collection;
-import java.util.Iterator;
+import com.ocsports.sql.UserSQLController;
 
 /**
  * Scheduled task for adding lock and survivor picks for users who made no
@@ -18,8 +20,9 @@ import java.util.Iterator;
  */
 public class CheckSeriesTask extends TimerTask {
 
-    private SeasonSQLController seasonSql = null;
-    private PoolSQLController poolSql = null;
+    private SeasonSQLController seasonSql;
+    private PoolSQLController poolSql;
+    private UserSQLController userSql;
 
     /**
      * execute the task and do not let exceptions leak as they will destroy the
@@ -29,6 +32,7 @@ public class CheckSeriesTask extends TimerTask {
         try {
             seasonSql = new SeasonSQLController();
             poolSql = new PoolSQLController();
+            userSql = new UserSQLController();
             this.getCurrentSeries();
             timerTaskCompleted();
         } catch (ProcessException pe) {
@@ -38,9 +42,15 @@ public class CheckSeriesTask extends TimerTask {
         } finally {
             if (seasonSql != null) {
                 seasonSql.closeConnection();
+                seasonSql = null;
             }
             if (poolSql != null) {
                 poolSql.closeConnection();
+                poolSql = null;
+            }
+            if (userSql != null) {
+                userSql.closeConnection();
+                userSql = null;
             }
         }
     }
@@ -53,7 +63,6 @@ public class CheckSeriesTask extends TimerTask {
      */
     private void getCurrentSeries() throws ProcessException {
         Collection seasons = seasonSql.getSeasons(SportTypes.TYPE_NFL_FOOTBALL, true);
-
         if (seasons == null || seasons.isEmpty()) {
             return;
         }
@@ -63,14 +72,24 @@ public class CheckSeriesTask extends TimerTask {
             SeasonModel sm = (SeasonModel) iter.next();
             int seriesId = seasonSql.getCurrentSeries(sm.getId());
             SeasonSeriesModel ssm = seasonSql.getSeasonSeriesModel(seriesId);
-            if (!ssm.isUserCleanup()) {
-                boolean allGamesStarted = seasonSql.allSeriesGamesStarted(seriesId);
-                if (allGamesStarted) {
-                    addTaskMessage("Final cleanup for season series " + seriesId);
-                    poolSql.cleanupUserSeries(seriesId);
-                    //set the status so we don't perform on this series any longer
-                    seasonSql.setSeriesCleanupStatus(seriesId, 1);
+            if (!ssm.isUserCleanup() && seasonSql.allSeriesGamesStarted(seriesId)) {
+                addTaskMessage("Final cleanup for season series " + seriesId);
+                poolSql.cleanupUserSeries(seriesId);
+                //set the status so we don't perform on this series any longer
+                seasonSql.setSeriesCleanupStatus(seriesId, 1);
+            }
+            if (!ssm.isGamesCompleted() && seasonSql.allSeriesGamesCompleted(seriesId)) {
+                addTaskMessage("All games finished for series " + seriesId);
+                Collection leagues = userSql.getLeaguesBySeason(sm.getId());
+                if(leagues != null && leagues.size() > 0) {
+                    Iterator iter2 = leagues.iterator();
+                    while(iter2.hasNext()) {
+                        LeagueModel lm = (LeagueModel)iter2.next();
+                        poolSql.setLeagueSeriesWinners(lm.getId(), seriesId);
+                    }
                 }
+                //set the status so we don't repeat for this series
+                seasonSql.setSeriesGamesCompleted(seriesId, 1);
             }
         }
     }

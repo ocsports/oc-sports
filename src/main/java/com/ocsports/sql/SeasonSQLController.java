@@ -453,6 +453,12 @@ public class SeasonSQLController extends SQLBase {
         executeUpdate(query, new Object[]{new Integer(status), new Integer(seriesId)});
     }
 
+    public void setSeriesGamesCompleted(int seriesId, int status) throws ProcessException {
+        String query = "UPDATE season_series_tbl SET games_completed_si = ?"
+                + " WHERE series_no_in = ?";
+        executeUpdate(query, new Object[]{new Integer(status), new Integer(seriesId)});
+    }
+
     public void setSeriesReminderStatus(int seriesId, int status) throws ProcessException {
         String query = "UPDATE season_series_tbl SET series_reminder_si = ?"
                 + " WHERE series_no_in = ?";
@@ -473,6 +479,22 @@ public class SeasonSQLController extends SQLBase {
             throw new ProcessException(sqle);
         }
         return allGamesStarted;
+    }
+
+    public boolean allSeriesGamesCompleted(int seriesId) throws ProcessException {
+        String query = "SELECT COUNT(*) FROM game_tbl"
+                + " WHERE series_no_in = ?"
+                + " AND game_posted_si = 0";
+        boolean allGamesCompleted = false;
+        try {
+            executeQuery(query, new Object[]{new Integer(seriesId)});
+            if (rs != null && rs.next()) {
+                allGamesCompleted = (rs.getInt(1) == 0);
+            }
+        } catch (SQLException sqle) {
+            throw new ProcessException(sqle);
+        }
+        return allGamesCompleted;
     }
 
     public GameModel findGameByTeams(int seriesId, int homeTeamId, int awayTeamId) throws ProcessException {
@@ -565,6 +587,7 @@ public class SeasonSQLController extends SQLBase {
         sm.setReminderEmail(rs.getInt("series_reminder_si") == 1);
         sm.setUserCleanup(rs.getInt("series_cleanup_si") == 1);
         sm.setSequence(rs.getInt("season_seq_no"));
+        sm.setGamesCompleted(rs.getInt("games_completed_si") == 1);
         return sm;
     }
 
