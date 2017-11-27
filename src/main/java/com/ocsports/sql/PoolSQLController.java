@@ -1,5 +1,14 @@
 package com.ocsports.sql;
 
+import java.sql.SQLException;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 import com.ocsports.core.ProcessException;
 import com.ocsports.core.Status;
 import com.ocsports.models.AuditPickModel;
@@ -12,14 +21,8 @@ import com.ocsports.models.SurvivorStandingsModel;
 import com.ocsports.models.UserGameXrefModel;
 import com.ocsports.models.UserModel;
 import com.ocsports.models.UserSeriesXrefModel;
-import java.sql.SQLException;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import com.ocsports.reports.ReportHelper;
+
 
 public class PoolSQLController extends SQLBase {
 
@@ -982,6 +985,7 @@ public class PoolSQLController extends SQLBase {
                         new Integer(lsx.getSeriesId()),
                         new Integer(lsx.getLeagueId())};
         executeUpdate(sql, args);
+        ReportHelper.setReportStale(ReportHelper.RPT_PUBLISHED_WINNERS);
     }
 
     public void updateLeagueSeries(LeagueSeriesXrefModel lsx) throws ProcessException {
@@ -996,6 +1000,7 @@ public class PoolSQLController extends SQLBase {
                         new Integer(lsx.getSeriesId()),
                         new Integer(lsx.getLeagueId())};
         executeUpdate(sql, args);
+        ReportHelper.setReportStale(ReportHelper.RPT_PUBLISHED_WINNERS);
     }
 
     public static UserGameXrefModel loadUserGameXrefModel(java.sql.ResultSet rs) throws SQLException {

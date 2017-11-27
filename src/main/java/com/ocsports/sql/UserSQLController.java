@@ -1,5 +1,11 @@
 package com.ocsports.sql;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+
 import com.ocsports.core.ProcessException;
 import com.ocsports.core.SportTypes;
 import com.ocsports.core.Status;
@@ -8,11 +14,8 @@ import com.ocsports.models.LeagueModel;
 import com.ocsports.models.SeasonModel;
 import com.ocsports.models.SystemNoticeModel;
 import com.ocsports.models.UserModel;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import com.ocsports.reports.ReportHelper;
+
 
 public class UserSQLController extends SQLBase {
 
@@ -387,6 +390,7 @@ public class UserSQLController extends SQLBase {
             new Integer(publish ? 1 : 0)
         };
         executeUpdate(query, args);
+        ReportHelper.setReportStale(ReportHelper.RPT_PUBLISHED_NOTICES);
     }
 
     public void updateSystemNotice(int noticeId, String msgText, boolean publish) throws ProcessException {
@@ -395,11 +399,13 @@ public class UserSQLController extends SQLBase {
                 + " , notice_updated_dt = ?"
                 + " WHERE notice_no_in = ?";
         executeUpdate(query, new Object[]{msgText, Boolean.valueOf(publish), new java.util.Date(), new Integer(noticeId)});
+        ReportHelper.setReportStale(ReportHelper.RPT_PUBLISHED_NOTICES);
     }
 
     public void deleteSystemNotice(int noticeId) throws ProcessException {
         String query = "DELETE FROM system_notice_tbl WHERE notice_no_in = ?";
         executeUpdate(query, new Object[]{new Integer(noticeId)});
+        ReportHelper.setReportStale(ReportHelper.RPT_PUBLISHED_NOTICES);
     }
 
     public Collection getAuditLoginModels(int userId, java.util.Date sinceDt, int lastXLogins) throws ProcessException {
