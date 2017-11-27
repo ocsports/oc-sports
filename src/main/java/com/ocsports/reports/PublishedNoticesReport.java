@@ -6,10 +6,14 @@ import com.ocsports.sql.UserSQLController;
 
 public class PublishedNoticesReport extends BaseReport {
 
-    Collection notices = null;
+    private Collection notices = null;
 
     public PublishedNoticesReport() {
         super(); // set/use report defaults
+    }
+
+    public Collection getNotices() {
+        return this.notices;
     }
 
     public boolean build() {

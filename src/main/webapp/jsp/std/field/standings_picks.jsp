@@ -1,9 +1,9 @@
 <%@page contentType="text/html"%>
 <%@page import="java.util.Collection"%>
 <%@page import="java.util.Iterator"%>
-<%@page import="java.text.HashMap"%>
-<%@page import="java.text.SortedMap"%>
-<%@page import="java.text.TreeMap"%>
+<%@page import="java.util.HashMap"%>
+<%@page import="java.util.SortedMap"%>
+<%@page import="java.util.TreeMap"%>
 <%@page import="com.ocsports.models.LeagueSeriesXrefModel"%>
 <%@page import="com.ocsports.models.SeasonSeriesModel"%>
 <%@page import="com.ocsports.models.StandingsModel"%>
@@ -67,7 +67,7 @@
                     Iterator iter3 = leagueSeries.iterator();
                     while(iter3.hasNext()) {
                         LeagueSeriesXrefModel lsx = (LeagueSeriesXrefModel)iter3.next();
-                        if (lsx.getSeriesId() == ssm.getSeriesId()) {
+                        if (lsx.getSeriesId() == ssm.getId()) {
                             int highScore = lsx.getLeagueHighScore();
                             if(highScore > 0 && highScore == userWins) {
                                 // bold + light-green; or use row style

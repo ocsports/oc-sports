@@ -1,5 +1,6 @@
 <%@page contentType="text/html" %>
 <%@page import="java.util.ArrayList"%>
+<%@page import="java.util.Collection"%>
 <%@page import="java.util.Iterator"%>
 <%@page import="com.ocsports.models.SystemNoticeModel"%>
 <%@page import="com.ocsports.reports.PublishedNoticesReport"%>
@@ -11,19 +12,20 @@
     // first, gather any published system notices and add to the list
     Object rpt = ReportHelper.getReport(ReportHelper.RPT_PUBLISHED_NOTICES);
     if(rpt != null) {
-        Collection sysNotices = (PublishedNoticesReport)rpt.getNotices();
+        Collection sysNotices = ((PublishedNoticesReport)rpt).getNotices();
         if(sysNotices != null && sysNotices.size() > 0) {
             Iterator sysIter = sysNotices.iterator();
             while(sysIter.hasNext()) {
                 SystemNoticeModel snm = (SystemNoticeModel)sysIter.next();
-                noticeList.add(ssm.getMessage());
+                noticeList.add(snm.getMessage());
             }
+        }
     }
 
     // see if there is a weekly winners notice, and add that to the list
     rpt = ReportHelper.getReport(ReportHelper.RPT_PUBLISHED_WINNERS);
     if(rpt != null) {
-        String notice = (PublishedWinnersReport)rpt.getSystemNotice();
+        String notice = ((PublishedWinnersReport)rpt).getSystemNotice();
         if(notice != null && notice.length() > 0) noticeList.add(notice);
     }
 %>
@@ -40,7 +42,6 @@
                 <li><%=(String)iter.next()%></li>
                 <%
             }
-            %>
-        <%}%>
+        }%>
     </ul>
 </div>
