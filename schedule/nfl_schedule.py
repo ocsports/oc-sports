@@ -4,13 +4,13 @@ import datetime
 import os
 
 # constants to be adjusted for each new season
-INPUT_FILE = "nfl_schedule_2017.csv"
-OUTPUT_FILE = "nfl_schedule_2017.sql"
-SEASON_KEY = 14
-LEAGUE_KEY = 14
-FIRST_SERIES_KEY = 225
-FIRST_GAME_KEY = 3130
-FIRST_SERIES_START = datetime.datetime.strptime("9/6/2017", "%m/%d/%Y")
+INPUT_FILE = "nfl_schedule_2018.csv"
+OUTPUT_FILE = "nfl_schedule_2018.sql"
+SEASON_KEY = 15
+LEAGUE_KEY = 15
+FIRST_SERIES_KEY = 242
+FIRST_GAME_KEY = 3390
+FIRST_SERIES_START = datetime.datetime.strptime("9/5/2018", "%m/%d/%Y")
 DATE_IDX = 0
 TIME_IDX = 1
 AWAY_TEAM_IDX = 2
@@ -159,7 +159,7 @@ def get_team_id(team_city):
             if v.replace(" ", "").upper() == team_city:
                 return team_id
 
-    raise Exception("Invalid team city: " + str(team_city))
+    raise Exception("Invalid team city: |" + str(team_city) + "|")
 
 
 def CDate(s, f):
