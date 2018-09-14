@@ -10,10 +10,10 @@ import javax.mail.Authenticator;
 import javax.mail.PasswordAuthentication;
 
 public class EmailAuthenticator extends Authenticator {
-    private static final String SMTP_AUTH_USER = "administrator@oc-sports.com";
-    private static final String SMTP_AUTH_PWD  = "**Chicken99";
 
     public PasswordAuthentication getPasswordAuthentication() {
-        return new PasswordAuthentication(SMTP_AUTH_USER, SMTP_AUTH_PWD);
+        String smtpUser = PropertiesHelper.getProperty(PropList.SMTP_USER);
+        String smtpPwd = PropertiesHelper.getProperty(PropList.SMTP_PWD);
+        return new PasswordAuthentication(smtpUser, smtpPwd);
     }
 }

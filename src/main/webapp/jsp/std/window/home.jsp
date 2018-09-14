@@ -1,23 +1,6 @@
 <%@page contentType="text/html"%>
-<%@page import="java.util.*"%>
-<%@page import="com.ocsports.servlets.AdminServlet"%>
-<%@page import="com.ocsports.sql.UserSQLController"%>
-<%@page import="com.ocsports.models.SystemNoticeModel"%>
 <%@page import="com.ocsports.core.PropertiesHelper"%>
 <%@page import="com.ocsports.core.DateHelper"%>
-<%
-    UserSQLController userSql = null;
-    Collection notices = null;
-    try {
-        userSql = new UserSQLController();
-        notices = userSql.getSystemNotices(-1, true);
-    }
-    catch(Exception ex) {
-    }
-    finally {
-        if (userSql != null) userSql.closeConnection();
-    }
-%>
 
 <jsp:include page="/jsp/std/window/page_header.jsp" />
 
@@ -35,24 +18,7 @@
     </div>
 <% } %>
 <div id="divMessages" style="width:98%; margin-left:1em; margin-top:1em; padding:2px">
-    <h4>Recent News / League Information</h4>
-    <div id="msglist" style="width:100%; overflow:auto">
-        <ul>
-            <%if(notices == null || notices.size() == 0) {%>
-                <li>No messages</li>
-            <%} else { %>
-                <%
-                Iterator iter = notices.iterator();
-                while( iter.hasNext() ) {
-                    SystemNoticeModel snm = (SystemNoticeModel)iter.next();
-                    %>
-                    <li><%=snm.getMessage()%></li>
-                    <%
-                }
-                %>
-            <%}%>
-        </ul>
-    </div>
+    <jsp:include page="/jsp/common/published_notices.jsp" />
 </div>
 
 <jsp:include page="/jsp/std/window/page_footer.jsp" />

@@ -15,11 +15,11 @@
     Collection games   = (Collection)request.getAttribute("GameModels");
     Collection errors  = (Collection)request.getAttribute("errors");
     HashMap teamMap = (HashMap)session.getAttribute( "teamMap" );
-    
+
     Iterator iter = null;
     SimpleDateFormat fmt = new SimpleDateFormat();
     String seriesName = "";
-    
+
     String seasonsURL = response.encodeURL("goAdmin?r=seasons");
     String saveSeasonURL = response.encodeURL("goAdmin?r=saveSeason");
     String saveSeriesURL = response.encodeURL("goAdmin?r=saveSeries");
@@ -70,10 +70,20 @@
                                         fmt.applyPattern( "MMM d, yyyy" );
                                         seriesDisplay = sm.getSeriesPrefix() + " " + ssm.getSequence() + " (" + fmt.format( new java.util.Date(ssm.getStartDate()) ) + " - " + fmt.format( new java.util.Date(ssm.getEndDate()) ) + ")";
                                         fmt.applyPattern( "MM/dd/yyyy" );
+                                        String js = "return showSeries(" +
+                                                    "'" + ssm.getId() + "'" +
+                                                    ", '" + ssm.getSeasonId() + "'" +
+                                                    ", '" + fmt.format(new java.util.Date(ssm.getStartDate())) + "'" +
+                                                    ", '" + fmt.format(new java.util.Date(ssm.getEndDate())) + "'" +
+                                                    ", '" + (ssm.isSpreadPublished() ? "1" : "0") + "'" +
+                                                    ", '" + (ssm.isUserCleanup() ? "1" : "0") + "'" +
+                                                    ", '" + (ssm.isReminderEmail() ? "1" : "0") + "'" +
+                                                    ", '" + (ssm.isGamesCompleted() ? "1" : "0") + "'" +
+                                                    ");";
                                         %>
                                         <tr>
                                             <td style="width:2em; border:0"><a href="#" onclick="changeSeries('<%=ssm.getId()%>'); return false"><img src="<%=request.getContextPath()%>/images/<%=seriesImg%>" border="0"></a></td>
-                                            <td style="width:100%; border:0"><a href="#" title="ID: <%=ssm.getId()%>" onclick="return showSeries('<%=ssm.getId()%>','<%=ssm.getSeasonId()%>','<%=fmt.format(new java.util.Date(ssm.getStartDate()))%>','<%=fmt.format(new java.util.Date(ssm.getEndDate()))%>','<%=(ssm.isSpreadPublished() ? "1" : "0")%>','<%=(ssm.isUserCleanup() ? "1" : "0")%>','<%=(ssm.isReminderEmail() ? "1" : "0")%>')"><%=seriesDisplay%></a></td>
+                                            <td style="width:100%; border:0"><a href="#" title="ID: <%=ssm.getId()%>" onclick="<%=js%>"><%=seriesDisplay%></a></td>
                                         </tr>
                                         <%
                                         if( seriesId == ssm.getId() && games != null && !games.isEmpty() ) {
@@ -111,7 +121,7 @@
                                                                     gameScore = homeTeam.getAbrv() + " " + homeScore + " - " + awayScore;
                                                                 else
                                                                     gameScore = awayTeam.getAbrv() + " " + awayScore + " - " + homeScore;
-                                                                    
+
                                                             }
                                                             fmt.applyPattern( "MM/dd/yyyy h:mm a" );
                                                             %>
@@ -210,6 +220,7 @@
                     <input type="checkbox" name="pub" CHECKED>&nbsp;Spreads Published?
                     <br/><input type="checkbox" name="cleanup" CHECKED>&nbsp;Series Cleanup Ran Successfully?
                     <br/><input type="checkbox" name="remind" CHECKED>&nbsp;Reminder Emails Sent?
+                    <br/><input type="checkbox" name="gamesCompleted" CHECKED>&nbsp;Games Completed?
                 </td>
             </tr>
             <%

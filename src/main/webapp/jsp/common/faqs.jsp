@@ -29,5 +29,4 @@
     PAUL CHARLTON<br/>
     PO BOX 687<br/>
     PLACENTIA, CA  92871<br/>
-    
 </div>

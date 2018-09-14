@@ -15,14 +15,15 @@ public class SeasonSeriesModel implements BaseModel {
     private boolean     userCleanup;
     private boolean     reminderEmail;
     private int         seq;
+    private boolean     gamesCompleted;
 
     public SeasonSeriesModel() {
-        this(-1, -1, -1, -1, false, false, false, -1);
+        this(-1, -1, -1, -1, false, false, false, -1, false);
     }
 
-    public SeasonSeriesModel(int _id, int _seasonId, long _startDt, long _endDt, 
-                             boolean _spreadPublished, boolean _userCleanup, 
-                             boolean _reminderEmail, int _sequence) {
+    public SeasonSeriesModel(int _id, int _seasonId, long _startDt, long _endDt,
+                             boolean _spreadPublished, boolean _userCleanup,
+                             boolean _reminderEmail, int _sequence, boolean _gamesCompleted) {
         setId( _id );
         setSeasonId( _seasonId );
         setStartDate( _startDt );
@@ -31,6 +32,7 @@ public class SeasonSeriesModel implements BaseModel {
         setUserCleanup( _userCleanup );
         setReminderEmail( _reminderEmail );
         setSequence( _sequence );
+        setGamesCompleted( _gamesCompleted );
     }
 
     public void setId(int _id) {
@@ -52,17 +54,21 @@ public class SeasonSeriesModel implements BaseModel {
     public void setSpreadPublished(boolean _spreadPublished) {
         this.spreadPublished = _spreadPublished;
     }
-    
+
     public void setReminderEmail(boolean _reminderEmail) {
         this.reminderEmail = _reminderEmail;
     }
-    
+
     public void setUserCleanup(boolean _userCleanup) {
         this.userCleanup = _userCleanup;
     }
-    
+
     public void setSequence(int _sequence) {
         this.seq = _sequence;
+    }
+
+    public void setGamesCompleted(boolean _gamesCompleted) {
+        this.gamesCompleted = _gamesCompleted;
     }
 
     public int getId() {
@@ -84,7 +90,7 @@ public class SeasonSeriesModel implements BaseModel {
     public boolean isSpreadPublished() {
         return this.spreadPublished;
     }
-    
+
     public boolean isReminderEmail() {
         return this.reminderEmail;
     }
@@ -92,8 +98,12 @@ public class SeasonSeriesModel implements BaseModel {
     public boolean isUserCleanup() {
         return this.userCleanup;
     }
-    
+
     public int getSequence() {
         return this.seq;
+    }
+
+    public boolean isGamesCompleted() {
+        return this.gamesCompleted;
     }
 }

@@ -17,26 +17,18 @@ public class MyEmailer {
     public static final String CONTENT_PLAIN       = "text/plain";
     public static final String CONTENT_HTML        = "text/html";
 
-    //private static final String SMTP_HOST_NAME      = "10.10.32.137";
-    //private static final String EMAIL_FROM_NAME     = "Football Draft";
-    //private static final String EMAIL_FROM_ADDRESS  = "pcharlton@winecountrygiftbaskets.com";
-
-    private static final String SMTP_HOST_NAME      = "mail.oc-sports.com";
-    private static final String EMAIL_FROM_NAME     = "OC Sports Administrator";
-    private static final String EMAIL_FROM_ADDRESS  = "administrator@oc-sports.com";
-    private static final String DEFAULT_TO_ADDRESS  = "administrator@oc-sports.com";
-    private static final boolean DEBUG_STATUS       = false;
-
     public static boolean sendEmailMsg(String[] toRecips, String[] ccRecips, String[] bccRecips, String subject, String message, String contentType) {
         boolean sendOk = false;
         try {
+            String smtpHost = PropertiesHelper.getProperty(PropList.SMTP_HOST);
+
             Properties props = new Properties();
-            props.put( "mail.host", SMTP_HOST_NAME );
-            props.put( "mail.smtp.host", SMTP_HOST_NAME );
-            props.put( "mail.smtp.auth", "true" );
+            props.put("mail.host", smtpHost);
+            props.put("mail.smtp.host", smtpHost);
+            props.put("mail.smtp.auth", "true");
 
             Session session = Session.getInstance( props, new EmailAuthenticator() );
-            session.setDebug( DEBUG_STATUS );
+            session.setDebug(false);
 
             if( contentType == null || contentType.length() == 0 ) {
                 contentType = CONTENT_PLAIN;
@@ -47,7 +39,9 @@ public class MyEmailer {
             msg.setContent( message, contentType );
             msg.setSentDate( new java.util.Date() );
 
-            InternetAddress fromAddress = new InternetAddress( EMAIL_FROM_ADDRESS, EMAIL_FROM_NAME );
+            String emailFromAddr = PropertiesHelper.getProperty(PropList.EMAIL_FROM_ADDR);
+            String emailFromName = PropertiesHelper.getProperty(PropList.EMAIL_FROM_DESC);
+            InternetAddress fromAddress = new InternetAddress(emailFromAddr, emailFromName);
             msg.setFrom( fromAddress );
 
             InternetAddress[] replyTo = new InternetAddress[] { fromAddress };
@@ -75,7 +69,7 @@ public class MyEmailer {
                 msg.setRecipients( Message.RecipientType.BCC, addressTo );
             }
             if( toRecips == null && ccRecips == null && bccRecips == null ) {
-                msg.addRecipient( Message.RecipientType.TO, new InternetAddress(DEFAULT_TO_ADDRESS) );
+                msg.addRecipient( Message.RecipientType.TO, fromAddress );
             }
             Transport.send(msg);
             sendOk = true;

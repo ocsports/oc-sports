@@ -29,7 +29,7 @@ function showSeason(sId, sName, sType, sPrefix, sActive) {
     return showDiv("divSeason", 400, 500);
 }
 
-function showSeries(sId, seasonId, startDate, endDate, sPub, sCleanup, sReminder) {
+function showSeries(sId, seasonId, startDate, endDate, sPub, sCleanup, sReminder, sGamesCompleted) {
     document.frmSeries.updateSeriesId.value = sId;
     document.frmSeries.updateSeasonId.value = seasonId;
     document.frmSeries.startDate.value = startDate;
@@ -37,6 +37,7 @@ function showSeries(sId, seasonId, startDate, endDate, sPub, sCleanup, sReminder
     document.frmSeries.pub.checked = (sPub == "1");
     document.frmSeries.cleanup.checked = (sCleanup == "1");
     document.frmSeries.remind.checked = (sReminder == "1");
+    document.frmSeries.gamesCompleted.checked = (sGamesCompleted == "1");
     return showDiv("divSeries", 450, 500);
 }
 

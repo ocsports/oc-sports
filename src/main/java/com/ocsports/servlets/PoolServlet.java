@@ -105,13 +105,11 @@ public class PoolServlet extends ServletBase {
     }
 
     public void standings(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ProcessException {
-        PoolSQLController sqlCtrlr = null;
+        PoolSQLController poolSql = null;
         SeasonSQLController seasonSql = null;
-        UserSQLController userSql = null;
         try {
-            sqlCtrlr = new PoolSQLController();
+            poolSql = new PoolSQLController();
             seasonSql = new SeasonSQLController();
-            userSql = new UserSQLController();
 
             LeagueModel lm = (LeagueModel) session.getAttribute("LeagueModel");
             if (lm == null) {
@@ -124,7 +122,10 @@ public class PoolServlet extends ServletBase {
             Collection series = seasonSql.getSeriesBySeason(lm.getSeasonId());
             request.setAttribute("SeriesModels", series);
 
-            SortedMap standings = sqlCtrlr.getStandings(lm.getId(), -1);
+            Collection leagueSeries = poolSql.getLeagueSeriesBySeason(lm.getId(), lm.getSeasonId());
+            request.setAttribute("LeagueSeriesModels", leagueSeries);
+
+            SortedMap standings = poolSql.getStandings(lm.getId(), -1);
             request.setAttribute("standings", standings);
 
             request.setAttribute(DETAIL_PAGE_ATTR, JSPPages.STANDINGS_PICKS);
@@ -134,14 +135,13 @@ public class PoolServlet extends ServletBase {
         } catch (ProcessException pe) {
             throw pe;
         } finally {
-            if (sqlCtrlr != null) {
-                sqlCtrlr.closeConnection();
+            if (poolSql != null) {
+                poolSql.closeConnection();
+                poolSql = null;
             }
             if (seasonSql != null) {
                 seasonSql.closeConnection();
-            }
-            if (userSql != null) {
-                userSql.closeConnection();
+                seasonSql = null;
             }
         }
     }

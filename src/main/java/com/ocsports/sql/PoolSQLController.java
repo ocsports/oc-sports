@@ -1,15 +1,5 @@
 package com.ocsports.sql;
 
-import com.ocsports.core.ProcessException;
-import com.ocsports.core.Status;
-import com.ocsports.models.AuditPickModel;
-import com.ocsports.models.GameModel;
-import com.ocsports.models.LockStandingsModel;
-import com.ocsports.models.StandingsModel;
-import com.ocsports.models.SurvivorStandingsModel;
-import com.ocsports.models.UserGameXrefModel;
-import com.ocsports.models.UserModel;
-import com.ocsports.models.UserSeriesXrefModel;
 import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -18,6 +8,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import com.ocsports.core.ProcessException;
+import com.ocsports.core.Status;
+import com.ocsports.models.AuditPickModel;
+import com.ocsports.models.GameModel;
+import com.ocsports.models.LeagueModel;
+import com.ocsports.models.LeagueSeriesXrefModel;
+import com.ocsports.models.LockStandingsModel;
+import com.ocsports.models.StandingsModel;
+import com.ocsports.models.SurvivorStandingsModel;
+import com.ocsports.models.UserGameXrefModel;
+import com.ocsports.models.UserModel;
+import com.ocsports.models.UserSeriesXrefModel;
+import com.ocsports.reports.ReportHelper;
+
 
 public class PoolSQLController extends SQLBase {
 
@@ -878,6 +883,126 @@ public class PoolSQLController extends SQLBase {
         updateSurvivorStatus(gm.getSeriesId(), gm.getAwayTeamId(), awaySurvivorStatus);
     }
 
+    // -----------------------
+    // LEAGUE SERIES
+    // -----------------------
+    public void setLeagueSeriesWinners(int leagueId, int seriesId) throws ProcessException {
+        String sql = "SELECT u.user_login_id_vc, COUNT(*)" +
+                     " FROM user_tbl u, user_game_xref_tbl ugx, game_tbl g" +
+                     " WHERE u.user_no_in = ugx.user_no_in" +
+                     " AND g.game_no_in = ugx.game_no_in" +
+                     " AND g.series_no_in = ?" +
+                     " AND u.league_no_in = ?" +
+                     " AND ugx.ugame_status_si = ?" +
+                     " GROUP BY u.user_login_id_vc" +
+                     " ORDER BY 2 DESC, 1 ASC";
+        String winners = "";
+        int highScore = -1;
+        try {
+            Object[] args = new Object[]{new Integer(seriesId),
+                            new Integer(leagueId),
+                            new Integer(Status.GAME_STATUS_WON)};
+            executeQuery(sql, args);
+            if(rs != null) {
+                while(rs.next()) {
+                    if(highScore == -1) {
+                        highScore = rs.getInt(2);
+                    }
+                    if(rs.getInt(2) < highScore) {
+                        // take the high score winners only, then exit
+                        break;
+                    }
+                    if(winners.length() > 0) winners += ", ";
+                    winners += rs.getString(1);
+                }
+            }
+            // update the current db record, if exists; otherwise create anew
+            LeagueSeriesXrefModel lsx = getLeagueSeries(seriesId, leagueId);
+            if(lsx == null) {
+                lsx = new LeagueSeriesXrefModel(leagueId, seriesId, winners, highScore);
+                createLeagueSeries(lsx);
+            } else {
+                lsx.setLeagueWinners(winners);
+                lsx.setLeagueHighScore(highScore);
+                updateLeagueSeries(lsx);
+            }
+        } catch (SQLException sqle) {
+            throw new ProcessException(sqle);
+        }
+    }
+
+    public LeagueSeriesXrefModel getLeagueSeries(int seriesId, int leagueId) throws ProcessException {
+        String sql = "SELECT * from league_series_xref_tbl" +
+                     " WHERE league_no_in = ?" +
+                     " AND series_no_in = ?";
+        LeagueSeriesXrefModel lsx = null;
+        try {
+            Object[] args = new Object[]{new Integer(leagueId),
+                            new Integer(seriesId)};
+            executeQuery(sql, args);
+            if(rs != null && rs.next()) {
+                this.loadLeagueSeriesXrefModel(rs);
+            }
+        } catch (SQLException sqle) {
+            throw new ProcessException(sqle);
+        }
+        return lsx;
+    }
+
+    public Collection getLeagueSeriesBySeason(int leagueId, int seasonId) throws ProcessException {
+        String sql = "SELECT lsx.* FROM league_series_xref_tbl lsx" +
+                     ", season_series_tbl ss" +
+                     " WHERE lsx.series_no_in = ss.series_no_in" +
+                     " AND lsx.league_no_in = ?" +
+                     " AND ss.season_no_in = ?" +
+                     " ORDER BY lsx.series_no_in";
+        Collection models = null;
+        try {
+            Object[] args = new Object[]{new Integer(leagueId),
+                            new Integer(seasonId)};
+            executeQuery(sql, args);
+            if(rs != null) {
+                models = new ArrayList();
+                while(rs.next()) {
+                    models.add(this.loadLeagueSeriesXrefModel(rs));
+                }
+            }
+        } catch (SQLException sqle) {
+            throw new ProcessException(sqle);
+        }
+        return models;
+    }
+
+    public void createLeagueSeries(LeagueSeriesXrefModel lsx) throws ProcessException {
+        String sql = "INSERT INTO league_series_xref_tbl(league_winners_vc" +
+                     ", league_high_score_si" +
+                     ", series_no_in" +
+                     ", league_no_in" +
+                     ") VALUES(?, ?, ?, ?)";
+
+        Object[] args = new Object[]{lsx.getLeagueWinners(),
+                        new Integer(lsx.getLeagueHighScore()),
+                        new Integer(lsx.getSeriesId()),
+                        new Integer(lsx.getLeagueId())};
+        executeUpdate(sql, args);
+        ReportHelper.setReportStale(ReportHelper.RPT_PUBLISHED_WINNERS);
+    }
+
+    public void updateLeagueSeries(LeagueSeriesXrefModel lsx) throws ProcessException {
+        String sql = "UPDATE league_series_xref_tbl" +
+                     " SET league_winners_vc = ?" +
+                     " , league_high_score_si = ?" +
+                     " WHERE series_no_in = ?" +
+                     " AND league_no_in = ?";
+
+        Object[] args = new Object[]{lsx.getLeagueWinners(),
+                        new Integer(lsx.getLeagueHighScore()),
+                        new Integer(lsx.getSeriesId()),
+                        new Integer(lsx.getLeagueId())};
+        executeUpdate(sql, args);
+        ReportHelper.setReportStale(ReportHelper.RPT_PUBLISHED_WINNERS);
+    }
+
     public static UserGameXrefModel loadUserGameXrefModel(java.sql.ResultSet rs) throws SQLException {
         UserGameXrefModel ugm = new UserGameXrefModel();
         ugm.setUserId(rs.getInt("user_no_in"));
@@ -901,6 +1026,15 @@ public class PoolSQLController extends SQLBase {
         usm.setSurvivorStatus(rs.getInt("survivor_status_si"));
         usm.setTimestamp(new java.util.Date(rs.getTimestamp("useries_timestamp_dt").getTime()));
         return usm;
+    }
+
+    public static LeagueSeriesXrefModel loadLeagueSeriesXrefModel(java.sql.ResultSet rs) throws SQLException {
+        LeagueSeriesXrefModel lsxm = new LeagueSeriesXrefModel();
+        lsxm.setLeagueId(rs.getInt("league_no_in"));
+        lsxm.setSeriesId(rs.getInt("series_no_in"));
+        lsxm.setLeagueWinners(rs.getString("league_winners_vc"));
+        lsxm.setLeagueHighScore(rs.getInt("league_high_score_si"));
+        return lsxm;
     }
 
     public static AuditPickModel loadAuditPickModel(java.sql.ResultSet rs) throws SQLException {
