@@ -351,16 +351,16 @@ public class SeasonSQLController extends SQLBase {
             ArrayList args = new ArrayList();
             String query = "SELECT * FROM team_tbl WHERE team_no_in > 0";
             if (city != null && city.length() > 0) {
-                query += " AND team_city_vc LIKE ?";
-                args.add(city + "%");
+                query += " AND team_city_vc = ?";
+                args.add(city);
             }
             if (name != null && name.length() > 0) {
-                query += " AND team_name_vc LIKE ?";
-                args.add(name + "%");
+                query += " AND team_name_vc = ?";
+                args.add(name);
             }
             if (abrv != null && abrv.length() > 0) {
-                query += " AND team_abrv_vc LIKE ?";
-                args.add(abrv + "%");
+                query += " AND team_abrv_vc = ?";
+                args.add(abrv);
             }
             query += " ORDER BY team_city_vc, team_name_vc";
 
