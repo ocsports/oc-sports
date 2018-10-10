@@ -484,7 +484,7 @@ public class SeasonSQLController extends SQLBase {
     public boolean allSeriesGamesCompleted(int seriesId) throws ProcessException {
         String query = "SELECT COUNT(*) FROM game_tbl"
                 + " WHERE series_no_in = ?"
-                + " AND game_posted_si = 0";
+                + " AND (game_posted_si is null or game_posted_si = 0)";
         boolean allGamesCompleted = false;
         try {
             executeQuery(query, new Object[]{new Integer(seriesId)});

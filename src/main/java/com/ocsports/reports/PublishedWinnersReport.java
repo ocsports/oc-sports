@@ -79,16 +79,21 @@ public class PublishedWinnersReport extends BaseReport {
         while(iter.hasNext()) {
             LeagueSeriesXrefModel lsx = (LeagueSeriesXrefModel)iter.next();
             int seq = this.getSeriesSequence(seriesModels, lsx.getSeriesId());
-            String week = "Week " + String.valueOf(seq) + " Winners - " +
-                      "<strong>" + lsx.getLeagueWinners() + "</strong>" +
-                      " (" + lsx.getLeagueHighScore() + " Wins)";
+            if(lsx.getLeagueHighScore() > 0) {
+                String week = "Week " + String.valueOf(seq) + " Winners - " +
+                          "<strong>" + lsx.getLeagueWinners() + "</strong>" +
+                          " (" + lsx.getLeagueHighScore() + " Wins)";
 
-            // later series go on top of the list; <br> tag between
-            if(msg.length() > 0) msg = "<br>" + msg;
-            msg = week + msg;
+                // later series go on top of the list; <br> tag between
+                if(msg.length() > 0) msg = "<br>" + msg;
+                msg = week + msg;
+            }
         }
+
         // put the final touches on the winners list
-        this.systemNotice = "<span style='color:#3355FF'>" + msg + "</span>";
+        if(msg.length() > 0) {
+            this.systemNotice = "<span style='color:#3355FF'>" + msg + "</span>";
+        }
     }
 
     private int getSeriesSequence(Collection seriesModels, int seriesId) {
