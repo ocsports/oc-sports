@@ -44,7 +44,7 @@ public class ReportHelper {
     public static void setReportStale(String reportType) {
         BaseReport rpt = (BaseReport)ReportHelper.savedReports.get(reportType);
         if(rpt != null) {
-            rpt.stale = false;
+            rpt.stale = true;
             ReportHelper.savedReports.put(reportType, rpt);
         }
     }
